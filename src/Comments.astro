@@ -1,0 +1,489 @@
+---
+/**
+ * Seriph Comments Component
+ *
+ * Displays threaded comments with a form to post new comments and replies.
+ * Customize with CSS custom properties.
+ *
+ * @example
+ * <Comments siteKey={import.meta.env.SERIPH_SITE_KEY} pageId={Astro.url.pathname} />
+ */
+
+interface Props {
+  /** Your site key (required) */
+  siteKey: string;
+  /** Unique identifier for this page (e.g., slug or URL path) */
+  pageId: string;
+  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  endpoint?: string;
+  /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
+  theme?: "light" | "dark" | "auto";
+  /** CSS class to add to the container */
+  class?: string;
+}
+
+const DEFAULT_ENDPOINT = "https://seriph.xyz";
+const API_PATH = "/api/v1";
+
+const {
+  siteKey,
+  pageId,
+  endpoint = DEFAULT_ENDPOINT,
+  theme = "light",
+  class: className = "",
+} = Astro.props;
+
+// Build the API URL
+const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
+---
+
+<div
+  class:list={["seriph-comments", `seriph-theme-${theme}`, className]}
+  data-seriph-comments
+  data-endpoint={baseUrl}
+  data-site-key={siteKey}
+  data-page-id={pageId}
+>
+  <div class="seriph-comments-list"></div>
+
+  <form class="seriph-comments-form">
+    <div class="seriph-reply-indicator" style="display: none;">
+      <span>Replying to <strong class="seriph-reply-to-name"></strong></span>
+      <button type="button" class="seriph-cancel-reply">Cancel</button>
+    </div>
+    <input type="hidden" name="parentId" value="" />
+    <slot name="form">
+      <div class="seriph-form-group">
+        <label for="seriph-author-name">Name</label>
+        <input type="text" id="seriph-author-name" name="authorName" required />
+      </div>
+      <div class="seriph-form-group">
+        <label for="seriph-author-email">Email (optional)</label>
+        <input type="email" id="seriph-author-email" name="authorEmail" />
+      </div>
+      <div class="seriph-form-group">
+        <label for="seriph-content">Comment</label>
+        <textarea id="seriph-content" name="content" required rows="3"></textarea>
+      </div>
+      <button type="submit">Post Comment</button>
+    </slot>
+
+    <!-- Honeypot field for spam protection (hidden from users, catches bots) -->
+    <div style="position: absolute; left: -9999px;" aria-hidden="true">
+      <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" />
+    </div>
+  </form>
+
+  <template id="seriph-comment-template">
+    <div class="seriph-comment">
+      <div class="seriph-comment-header">
+        <span class="seriph-comment-author"></span>
+        <span class="seriph-comment-date"></span>
+      </div>
+      <div class="seriph-comment-content"></div>
+      <button type="button" class="seriph-reply-btn">Reply</button>
+      <div class="seriph-comment-replies"></div>
+    </div>
+  </template>
+</div>
+
+<script>
+  interface Comment {
+    id: string;
+    authorName: string;
+    content: string;
+    createdAt: string;
+    replies: Comment[];
+  }
+
+  // Get or create a visitor ID for anonymous users
+  const VISITOR_KEY = "seriph_visitor_id";
+  function getVisitorId(): string {
+    let id = localStorage.getItem(VISITOR_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(VISITOR_KEY, id);
+    }
+    return id;
+  }
+
+  // Store form load timestamps for spam detection
+  const formTimestamps = new WeakMap<Element, number>();
+
+  document.querySelectorAll("[data-seriph-comments]").forEach((container) => {
+    const endpoint = (container as HTMLElement).dataset.endpoint;
+    const siteKey = (container as HTMLElement).dataset.siteKey;
+    const pageId = (container as HTMLElement).dataset.pageId;
+    const list = container.querySelector(".seriph-comments-list");
+    const form = container.querySelector(".seriph-comments-form") as HTMLFormElement;
+    const template = container.querySelector("#seriph-comment-template") as HTMLTemplateElement;
+    const replyIndicator = container.querySelector(".seriph-reply-indicator") as HTMLElement;
+    const replyToName = container.querySelector(".seriph-reply-to-name") as HTMLElement;
+    const cancelReplyBtn = container.querySelector(".seriph-cancel-reply") as HTMLButtonElement;
+    const parentIdInput = form?.querySelector('input[name="parentId"]') as HTMLInputElement;
+
+    if (!endpoint || !siteKey || !pageId || !list || !form || !template) return;
+
+    const visitorId = getVisitorId();
+    const headers = {
+      "X-Seriph-Key": siteKey,
+      "X-Seriph-Visitor": visitorId,
+    };
+
+    // Record when form was loaded (for time-based spam detection)
+    formTimestamps.set(form, Math.floor(Date.now() / 1000));
+
+    // Cancel reply mode
+    function cancelReply() {
+      if (parentIdInput) parentIdInput.value = "";
+      if (replyIndicator) replyIndicator.style.display = "none";
+      const submitBtn = form.querySelector('[type="submit"]') as HTMLButtonElement;
+      if (submitBtn) submitBtn.textContent = "Post Comment";
+    }
+
+    cancelReplyBtn?.addEventListener("click", cancelReply);
+
+    async function loadComments() {
+      try {
+        const response = await fetch(
+          `${endpoint}/comments/${encodeURIComponent(pageId!)}`,
+          { headers },
+        );
+        if (!response.ok) return;
+        const data = await response.json();
+        renderComments(data.comment_threads || []);
+      } catch (e) {
+        console.error("Failed to load comments:", e);
+      }
+    }
+
+    function renderComments(comments: Comment[]) {
+      list!.innerHTML = "";
+      if (comments.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "seriph-comments-empty";
+        empty.textContent = "No comments yet. Be the first!";
+        list!.appendChild(empty);
+        return;
+      }
+      comments.forEach((comment) => renderComment(comment, list!));
+    }
+
+    function renderComment(comment: Comment, parent: Element) {
+      const clone = template!.content.cloneNode(true) as DocumentFragment;
+      const el = clone.querySelector(".seriph-comment") as HTMLElement;
+      el.dataset.commentId = comment.id;
+      el.querySelector(".seriph-comment-author")!.textContent = comment.authorName;
+      el.querySelector(".seriph-comment-date")!.textContent = new Date(
+        comment.createdAt,
+      ).toLocaleDateString();
+      el.querySelector(".seriph-comment-content")!.textContent = comment.content;
+
+      // Add reply button handler
+      const replyBtn = el.querySelector(".seriph-reply-btn") as HTMLButtonElement;
+      replyBtn?.addEventListener("click", () => {
+        if (parentIdInput) parentIdInput.value = comment.id;
+        if (replyToName) replyToName.textContent = comment.authorName;
+        if (replyIndicator) replyIndicator.style.display = "flex";
+        const submitBtn = form.querySelector('[type="submit"]') as HTMLButtonElement;
+        if (submitBtn) submitBtn.textContent = "Post Reply";
+        // Scroll form into view and focus
+        form.scrollIntoView({ behavior: "smooth", block: "center" });
+        const contentField = form.querySelector('textarea[name="content"]') as HTMLTextAreaElement;
+        setTimeout(() => contentField?.focus(), 300);
+      });
+
+      const repliesContainer = el.querySelector(".seriph-comment-replies")!;
+      comment.replies?.forEach((reply) => renderComment(reply, repliesContainer));
+
+      parent.appendChild(clone);
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formEl = e.target as HTMLFormElement;
+      const formData = new FormData(formEl);
+      const submitBtn = formEl.querySelector('[type="submit"]') as HTMLButtonElement;
+
+      if (submitBtn) submitBtn.disabled = true;
+
+      // Get honeypot value (should be empty for real users)
+      const honeypot = formData.get("_gotcha") as string | null;
+
+      // Get load timestamp for time-based spam detection
+      const loadTimestamp = formTimestamps.get(formEl);
+
+      // Get parent ID if replying
+      const parentId = formData.get("parentId") as string | null;
+
+      try {
+        const response = await fetch(
+          `${endpoint}/comments/${encodeURIComponent(pageId)}`,
+          {
+            method: "POST",
+            headers: {
+              ...headers,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              authorName: formData.get("authorName"),
+              authorEmail: formData.get("authorEmail") || undefined,
+              content: formData.get("content"),
+              parentId: parentId ? parseInt(parentId, 10) : undefined,
+              _gotcha: honeypot || undefined,
+              _seriph_ts: loadTimestamp,
+            }),
+          },
+        );
+
+        if (!response.ok) throw new Error("Failed to post comment");
+
+        formEl.reset();
+        cancelReply(); // Reset reply mode
+        container.dispatchEvent(
+          new CustomEvent("seriph:comment-posted", {
+            detail: await response.json(),
+          }),
+        );
+
+        // Show pending notice (comment may need approval)
+        const notice = document.createElement("p");
+        notice.className = "seriph-comment-notice";
+        notice.textContent = "Thanks! Your comment is pending approval.";
+        formEl.appendChild(notice);
+        setTimeout(() => notice.remove(), 5000);
+      } catch (e) {
+        console.error("Failed to post comment:", e);
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    });
+
+    loadComments();
+  });
+</script>
+
+<style is:global>
+  @layer seriph {
+    .seriph-comments {
+      --seriph-border-color: #e5e7eb;
+      --seriph-bg-color: #f9fafb;
+      --seriph-text-color: inherit;
+      --seriph-text-muted: #6b7280;
+      --seriph-input-bg: white;
+      --seriph-focus-color: #3b82f6;
+      --seriph-focus-ring: rgba(59, 130, 246, 0.2);
+      --seriph-button-bg: #3b82f6;
+      --seriph-button-hover: #2563eb;
+      --seriph-button-text: white;
+      --seriph-notice-bg: #fef3c7;
+      --seriph-notice-text: #92400e;
+    }
+
+    /* Dark theme */
+    .seriph-comments.seriph-theme-dark {
+      --seriph-border-color: #374151;
+      --seriph-bg-color: transparent;
+      --seriph-text-color: #f3f4f6;
+      --seriph-text-muted: #9ca3af;
+      --seriph-input-bg: #1f2937;
+      --seriph-focus-color: #60a5fa;
+      --seriph-focus-ring: rgba(96, 165, 250, 0.3);
+      --seriph-button-bg: #3b82f6;
+      --seriph-button-hover: #60a5fa;
+      --seriph-button-text: white;
+      --seriph-notice-bg: #422006;
+      --seriph-notice-text: #fcd34d;
+    }
+
+    /* Auto theme - follows prefers-color-scheme */
+    @media (prefers-color-scheme: dark) {
+      .seriph-comments.seriph-theme-auto {
+        --seriph-border-color: #374151;
+        --seriph-bg-color: transparent;
+        --seriph-text-color: #f3f4f6;
+        --seriph-text-muted: #9ca3af;
+        --seriph-input-bg: #1f2937;
+        --seriph-focus-color: #60a5fa;
+        --seriph-focus-ring: rgba(96, 165, 250, 0.3);
+        --seriph-button-bg: #3b82f6;
+        --seriph-button-hover: #60a5fa;
+        --seriph-button-text: white;
+        --seriph-notice-bg: #422006;
+        --seriph-notice-text: #fcd34d;
+      }
+    }
+
+    .seriph-comments {
+      color: var(--seriph-text-color);
+    }
+
+    .seriph-comments-form {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--seriph-border-color);
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+
+    @media (min-width: 480px) {
+      .seriph-comments-form {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      /* Comment textarea and buttons span full width */
+      .seriph-comments-form .seriph-form-group:has(textarea),
+      .seriph-comments-form .seriph-reply-indicator,
+      .seriph-comments-form button[type="submit"] {
+        grid-column: 1 / -1;
+      }
+    }
+
+    .seriph-reply-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--seriph-notice-bg);
+      color: var(--seriph-notice-text);
+      border-radius: 0.25rem;
+      font-size: 0.8125rem;
+      grid-column: 1 / -1;
+    }
+
+    .seriph-cancel-reply {
+      margin-left: auto;
+      padding: 0.125rem 0.5rem;
+      background: transparent;
+      border: 1px solid currentColor;
+      border-radius: 0.25rem;
+      color: inherit;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .seriph-cancel-reply:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .seriph-form-group {
+      margin-bottom: 0;
+    }
+
+    .seriph-form-group label {
+      display: block;
+      margin-bottom: 0.125rem;
+      font-weight: 500;
+      font-size: 0.75rem;
+    }
+
+    .seriph-form-group input,
+    .seriph-form-group textarea {
+      width: 100%;
+      padding: 0.375rem 0.5rem;
+      border: 1px solid var(--seriph-border-color);
+      border-radius: 0.25rem;
+      font-size: 0.875rem;
+      background: var(--seriph-input-bg);
+      color: var(--seriph-text-color);
+    }
+
+    .seriph-form-group textarea {
+      min-height: 4rem;
+    }
+
+    .seriph-form-group input:focus,
+    .seriph-form-group textarea:focus {
+      outline: none;
+      border-color: var(--seriph-focus-color);
+      box-shadow: 0 0 0 2px var(--seriph-focus-ring);
+    }
+
+    .seriph-comments-form button[type="submit"] {
+      padding: 0.375rem 0.75rem;
+      background: var(--seriph-button-bg);
+      color: var(--seriph-button-text);
+      border: none;
+      border-radius: 0.25rem;
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .seriph-comments-form button[type="submit"]:hover {
+      background: var(--seriph-button-hover);
+    }
+
+    .seriph-comments-form button[type="submit"]:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .seriph-comment {
+      padding: 0.75rem;
+      background: var(--seriph-bg-color);
+      border: 1px solid var(--seriph-border-color);
+      border-radius: 0.375rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .seriph-comment-header {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.25rem;
+      font-size: 0.8125rem;
+    }
+
+    .seriph-comment-author {
+      font-weight: 600;
+    }
+
+    .seriph-comment-date {
+      color: var(--seriph-text-muted);
+      font-size: 0.75rem;
+    }
+
+    .seriph-comment-content {
+      white-space: pre-wrap;
+      font-size: 0.875rem;
+    }
+
+    .seriph-reply-btn {
+      margin-top: 0.5rem;
+      padding: 0.125rem 0.5rem;
+      background: transparent;
+      border: none;
+      color: var(--seriph-text-muted);
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .seriph-reply-btn:hover {
+      color: var(--seriph-focus-color);
+      text-decoration: underline;
+    }
+
+    .seriph-comment-replies {
+      margin-left: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .seriph-comments-empty {
+      color: var(--seriph-text-muted);
+      font-style: italic;
+      font-size: 0.875rem;
+    }
+
+    .seriph-comment-notice {
+      margin-top: 0.5rem;
+      padding: 0.375rem 0.5rem;
+      background: var(--seriph-notice-bg);
+      color: var(--seriph-notice-text);
+      border-radius: 0.25rem;
+      font-size: 0.8125rem;
+    }
+  }
+</style>

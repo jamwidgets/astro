@@ -1,0 +1,154 @@
+---
+/**
+ * Seriph Headless Subscribe Form
+ *
+ * A headless subscription form that handles API/state but lets you provide your own UI.
+ * Use the default slot to provide your own email input and submit button.
+ *
+ * Required: An input with name="email" and a submit button.
+ *
+ * @example Basic usage
+ * <SubscribeForm siteKey={import.meta.env.SERIPH_SITE_KEY}>
+ *   <input type="email" name="email" placeholder="you@example.com" required />
+ *   <button type="submit">Subscribe</button>
+ * </SubscribeForm>
+ *
+ * @example With custom message handling
+ * <SubscribeForm siteKey={import.meta.env.SERIPH_SITE_KEY} id="my-form">
+ *   <input type="email" name="email" class="my-input" required />
+ *   <button type="submit">Get updates</button>
+ *   <p class="message"></p>
+ * </SubscribeForm>
+ * <script>
+ *   document.getElementById('my-form')?.addEventListener('seriph:success', (e) => {
+ *     e.target.querySelector('.message').textContent = e.detail.message;
+ *   });
+ * </script>
+ *
+ * Events:
+ * - seriph:loading - Fired when submission starts
+ * - seriph:success - Fired on success, detail contains { success, message }
+ * - seriph:error - Fired on error, detail contains the Error object
+ */
+
+interface Props {
+  /** Your site key (required) */
+  siteKey: string;
+  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  endpoint?: string;
+  /** HTML id attribute for the form */
+  id?: string;
+  /** CSS class for the form */
+  class?: string;
+}
+
+const DEFAULT_ENDPOINT = "https://seriph.xyz";
+const API_PATH = "/api/v1";
+
+const {
+  siteKey,
+  endpoint = DEFAULT_ENDPOINT,
+  id,
+  class: className = "",
+} = Astro.props;
+
+const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
+---
+
+<form
+  id={id}
+  class:list={["seriph-subscribe-form", className]}
+  data-seriph-subscribe-form
+  data-endpoint={baseUrl}
+  data-site-key={siteKey}
+>
+  <slot />
+
+  <!-- Honeypot field for spam protection -->
+  <div style="position: absolute; left: -9999px;" aria-hidden="true">
+    <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" />
+  </div>
+</form>
+
+<script>
+  interface SubscribeResponse {
+    success: boolean;
+    message: string;
+  }
+
+  // Get or create a visitor ID for anonymous users
+  const VISITOR_KEY = "seriph_visitor_id";
+  function getVisitorId(): string {
+    let id = localStorage.getItem(VISITOR_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(VISITOR_KEY, id);
+    }
+    return id;
+  }
+
+  document.querySelectorAll("[data-seriph-subscribe-form]").forEach((form) => {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formEl = e.target as HTMLFormElement;
+      const endpoint = formEl.dataset.endpoint;
+      const siteKey = formEl.dataset.siteKey;
+
+      if (!endpoint || !siteKey) {
+        console.error("Seriph SubscribeForm: missing siteKey or endpoint");
+        return;
+      }
+
+      // Collect form data
+      const formData = new FormData(formEl);
+      const data: Record<string, unknown> = {};
+      formData.forEach((value, key) => {
+        data[key] = value;
+      });
+
+      // Dispatch loading event
+      formEl.dispatchEvent(new CustomEvent("seriph:loading", { bubbles: true }));
+
+      try {
+        const response = await fetch(`${endpoint}/subscribe`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Seriph-Key": siteKey,
+            "X-Seriph-Visitor": getVisitorId(),
+          },
+          body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || "Subscription failed");
+        }
+
+        const result: SubscribeResponse = await response.json();
+
+        // Dispatch success event
+        formEl.dispatchEvent(
+          new CustomEvent("seriph:success", {
+            bubbles: true,
+            detail: result,
+          }),
+        );
+
+        // Clear email input on success
+        const emailInput = formEl.querySelector('input[name="email"]') as HTMLInputElement | null;
+        if (emailInput) {
+          emailInput.value = "";
+        }
+      } catch (error) {
+        formEl.dispatchEvent(
+          new CustomEvent("seriph:error", {
+            bubbles: true,
+            detail: error,
+          }),
+        );
+      }
+    });
+  });
+</script>

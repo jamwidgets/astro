@@ -1,0 +1,269 @@
+---
+/**
+ * Seriph Waitlist Component
+ *
+ * Displays a waitlist signup form for collecting emails before launch.
+ *
+ * @example
+ * <Waitlist siteKey={import.meta.env.SERIPH_SITE_KEY} />
+ */
+
+interface Props {
+  /** Your site key (required) */
+  siteKey: string;
+  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  endpoint?: string;
+  /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
+  theme?: "light" | "dark" | "auto";
+  /** Placeholder text for the email input (default: 'Enter your email') */
+  placeholder?: string;
+  /** Button text (default: 'Join Waitlist') */
+  buttonText?: string;
+  /** Success message (default: "You're on the list!") */
+  successMessage?: string;
+  /** CSS class to add to the container */
+  class?: string;
+}
+
+const DEFAULT_ENDPOINT = "https://seriph.xyz";
+const API_PATH = "/api/v1";
+
+const {
+  siteKey,
+  endpoint = DEFAULT_ENDPOINT,
+  theme = "light",
+  placeholder = "Enter your email",
+  buttonText = "Join Waitlist",
+  successMessage = "You're on the list!",
+  class: className = "",
+} = Astro.props;
+
+// Build the API URL
+const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
+---
+
+<div
+  class:list={["seriph-waitlist", `seriph-theme-${theme}`, className]}
+  data-seriph-waitlist
+  data-endpoint={baseUrl}
+  data-site-key={siteKey}
+  data-success-message={successMessage}
+>
+  <form class="seriph-waitlist-form">
+    <input
+      type="email"
+      name="email"
+      class="seriph-waitlist-input"
+      placeholder={placeholder}
+      required
+    />
+    <button type="submit" class="seriph-waitlist-submit">
+      {buttonText}
+    </button>
+  </form>
+  <div class="seriph-waitlist-message" style="display: none;"></div>
+</div>
+
+<script>
+  // Get or create a visitor ID for anonymous users
+  const VISITOR_KEY = "seriph_visitor_id";
+  function getVisitorId(): string {
+    let id = localStorage.getItem(VISITOR_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(VISITOR_KEY, id);
+    }
+    return id;
+  }
+
+  document.querySelectorAll("[data-seriph-waitlist]").forEach((container) => {
+    const endpoint = (container as HTMLElement).dataset.endpoint;
+    const siteKey = (container as HTMLElement).dataset.siteKey;
+    const successMessage = (container as HTMLElement).dataset.successMessage || "You're on the list!";
+
+    if (!endpoint || !siteKey) return;
+
+    const visitorId = getVisitorId();
+    const headers = {
+      "X-Seriph-Key": siteKey,
+      "X-Seriph-Visitor": visitorId,
+      "Content-Type": "application/json",
+    };
+
+    const form = container.querySelector(".seriph-waitlist-form") as HTMLFormElement;
+    const input = container.querySelector(".seriph-waitlist-input") as HTMLInputElement;
+    const submitBtn = container.querySelector(".seriph-waitlist-submit") as HTMLButtonElement;
+    const messageEl = container.querySelector(".seriph-waitlist-message") as HTMLElement;
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = input.value.trim();
+      if (!email) return;
+
+      submitBtn.disabled = true;
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = "Joining...";
+      messageEl.style.display = "none";
+
+      try {
+        const response = await fetch(`${endpoint}/waitlist`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ email }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || "Failed to join waitlist");
+        }
+
+        // Hide form and show success
+        form.style.display = "none";
+        messageEl.textContent = successMessage;
+        messageEl.className = "seriph-waitlist-message seriph-success";
+        messageEl.style.display = "block";
+
+        container.dispatchEvent(
+          new CustomEvent("seriph:waitlist-joined", {
+            detail: { email },
+          }),
+        );
+      } catch (e) {
+        console.error("Failed to join waitlist:", e);
+        messageEl.textContent = e instanceof Error ? e.message : "Failed to join waitlist";
+        messageEl.className = "seriph-waitlist-message seriph-error";
+        messageEl.style.display = "block";
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+
+        setTimeout(() => {
+          messageEl.style.display = "none";
+        }, 3000);
+      }
+    });
+  });
+</script>
+
+<style is:global>
+  @layer seriph {
+    .seriph-waitlist {
+      --seriph-border-color: #e5e7eb;
+      --seriph-bg-color: white;
+      --seriph-text-color: inherit;
+      --seriph-text-muted: #6b7280;
+      --seriph-button-bg: #3b82f6;
+      --seriph-button-text: white;
+      --seriph-button-hover: #2563eb;
+      --seriph-success-color: #16a34a;
+      --seriph-success-bg: #dcfce7;
+      --seriph-error-color: #dc2626;
+      --seriph-error-bg: #fef2f2;
+
+      font-family: inherit;
+    }
+
+    /* Dark theme */
+    .seriph-waitlist.seriph-theme-dark {
+      --seriph-border-color: #374151;
+      --seriph-bg-color: #1f2937;
+      --seriph-text-color: #f3f4f6;
+      --seriph-text-muted: #9ca3af;
+      --seriph-success-color: #22c55e;
+      --seriph-success-bg: rgba(34, 197, 94, 0.15);
+      --seriph-error-color: #ef4444;
+      --seriph-error-bg: rgba(239, 68, 68, 0.15);
+    }
+
+    /* Auto theme */
+    @media (prefers-color-scheme: dark) {
+      .seriph-waitlist.seriph-theme-auto {
+        --seriph-border-color: #374151;
+        --seriph-bg-color: #1f2937;
+        --seriph-text-color: #f3f4f6;
+        --seriph-text-muted: #9ca3af;
+        --seriph-success-color: #22c55e;
+        --seriph-success-bg: rgba(34, 197, 94, 0.15);
+        --seriph-error-color: #ef4444;
+        --seriph-error-bg: rgba(239, 68, 68, 0.15);
+      }
+    }
+
+    .seriph-waitlist-form {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .seriph-waitlist-input {
+      flex: 1;
+      padding: 0.625rem 0.875rem;
+      font-size: 0.875rem;
+      border: 1px solid var(--seriph-border-color);
+      border-radius: 0.5rem;
+      background: var(--seriph-bg-color);
+      color: var(--seriph-text-color);
+      font-family: inherit;
+      min-width: 0;
+    }
+
+    .seriph-waitlist-input:focus {
+      outline: none;
+      border-color: var(--seriph-button-bg);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .seriph-waitlist-input::placeholder {
+      color: var(--seriph-text-muted);
+    }
+
+    .seriph-waitlist-submit {
+      padding: 0.625rem 1rem;
+      background: var(--seriph-button-bg);
+      color: var(--seriph-button-text);
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .seriph-waitlist-submit:hover:not(:disabled) {
+      background: var(--seriph-button-hover);
+    }
+
+    .seriph-waitlist-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .seriph-waitlist-message {
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      border-radius: 0.5rem;
+      text-align: center;
+    }
+
+    .seriph-waitlist-message.seriph-success {
+      background: var(--seriph-success-bg);
+      color: var(--seriph-success-color);
+    }
+
+    .seriph-waitlist-message.seriph-error {
+      background: var(--seriph-error-bg);
+      color: var(--seriph-error-color);
+    }
+
+    /* Responsive: stack on small screens */
+    @media (max-width: 400px) {
+      .seriph-waitlist-form {
+        flex-direction: column;
+      }
+
+      .seriph-waitlist-submit {
+        width: 100%;
+      }
+    }
+  }
+</style>

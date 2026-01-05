@@ -1,0 +1,66 @@
+{
+  "name": "@seriphxyz/astro",
+  "version": "0.1.11",
+  "description": "Astro components and content loader for Seriph widgets (forms, comments, reactions, posts)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seriphxyz/astro.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "homepage": "https://seriph.xyz",
+  "author": "Tim Marks <tim@imothee.xyz>",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./loader": {
+      "types": "./dist/loader.d.ts",
+      "import": "./dist/loader.js"
+    },
+    "./Form": "./src/Form.astro",
+    "./Comments": "./src/Comments.astro",
+    "./Reactions": "./src/Reactions.astro",
+    "./Views": "./src/Views.astro",
+    "./Poll": "./src/Poll.astro",
+    "./Subscribe": "./src/Subscribe.astro",
+    "./SubscribeForm": "./src/SubscribeForm.astro",
+    "./Announcements": "./src/Announcements.astro",
+    "./Feedback": "./src/Feedback.astro",
+    "./Waitlist": "./src/Waitlist.astro",
+    "./Embed": "./src/Embed.astro"
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "astro",
+    "seriph",
+    "forms",
+    "comments",
+    "reactions",
+    "posts",
+    "widgets",
+    "content-loader",
+    "subscribe"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@seriphxyz/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "astro": "^5.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

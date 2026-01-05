@@ -1,0 +1,323 @@
+---
+/**
+ * Seriph Feedback Component
+ *
+ * Displays a feedback form for collecting user suggestions.
+ * Supports different feedback types (bug, feature, improvement, other).
+ *
+ * @example
+ * <Feedback siteKey={import.meta.env.SERIPH_SITE_KEY} />
+ */
+
+interface Props {
+  /** Your site key (required) */
+  siteKey: string;
+  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  endpoint?: string;
+  /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
+  theme?: "light" | "dark" | "auto";
+  /** Placeholder text for the feedback input (default: 'Share your feedback...') */
+  placeholder?: string;
+  /** Show feedback type selector (default: true) */
+  showTypeSelector?: boolean;
+  /** CSS class to add to the container */
+  class?: string;
+}
+
+const DEFAULT_ENDPOINT = "https://seriph.xyz";
+const API_PATH = "/api/v1";
+
+const {
+  siteKey,
+  endpoint = DEFAULT_ENDPOINT,
+  theme = "light",
+  placeholder = "Share your feedback...",
+  showTypeSelector = true,
+  class: className = "",
+} = Astro.props;
+
+// Build the API URL
+const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
+---
+
+<div
+  class:list={["seriph-feedback", `seriph-theme-${theme}`, className]}
+  data-seriph-feedback
+  data-endpoint={baseUrl}
+  data-site-key={siteKey}
+>
+  <form class="seriph-feedback-form">
+    {showTypeSelector && (
+      <div class="seriph-feedback-type-selector">
+        <label class="seriph-feedback-type">
+          <input type="radio" name="feedbackType" value="feature" checked />
+          <span>Feature</span>
+        </label>
+        <label class="seriph-feedback-type">
+          <input type="radio" name="feedbackType" value="bug" />
+          <span>Bug</span>
+        </label>
+        <label class="seriph-feedback-type">
+          <input type="radio" name="feedbackType" value="improvement" />
+          <span>Improvement</span>
+        </label>
+        <label class="seriph-feedback-type">
+          <input type="radio" name="feedbackType" value="other" />
+          <span>Other</span>
+        </label>
+      </div>
+    )}
+    <textarea
+      name="content"
+      class="seriph-feedback-textarea"
+      placeholder={placeholder}
+      rows="3"
+      required
+    ></textarea>
+    <div class="seriph-feedback-footer">
+      <span class="seriph-feedback-message"></span>
+      <button type="submit" class="seriph-feedback-submit">
+        Send Feedback
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Get or create a visitor ID for anonymous users
+  const VISITOR_KEY = "seriph_visitor_id";
+  function getVisitorId(): string {
+    let id = localStorage.getItem(VISITOR_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(VISITOR_KEY, id);
+    }
+    return id;
+  }
+
+  document.querySelectorAll("[data-seriph-feedback]").forEach((container) => {
+    const endpoint = (container as HTMLElement).dataset.endpoint;
+    const siteKey = (container as HTMLElement).dataset.siteKey;
+
+    if (!endpoint || !siteKey) return;
+
+    const visitorId = getVisitorId();
+    const headers = {
+      "X-Seriph-Key": siteKey,
+      "X-Seriph-Visitor": visitorId,
+      "Content-Type": "application/json",
+    };
+
+    const form = container.querySelector(".seriph-feedback-form") as HTMLFormElement;
+    const textarea = container.querySelector(".seriph-feedback-textarea") as HTMLTextAreaElement;
+    const submitBtn = container.querySelector(".seriph-feedback-submit") as HTMLButtonElement;
+    const messageEl = container.querySelector(".seriph-feedback-message") as HTMLElement;
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const content = textarea.value.trim();
+      if (!content) return;
+
+      const typeInput = form.querySelector('input[name="feedbackType"]:checked') as HTMLInputElement | null;
+      const feedbackType = typeInput?.value || "other";
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Sending...";
+      messageEl.textContent = "";
+      messageEl.className = "seriph-feedback-message";
+
+      try {
+        const response = await fetch(`${endpoint}/feedback`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ content, feedbackType }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || "Failed to submit feedback");
+        }
+
+        textarea.value = "";
+        messageEl.textContent = "Thank you for your feedback!";
+        messageEl.className = "seriph-feedback-message seriph-success";
+
+        container.dispatchEvent(
+          new CustomEvent("seriph:feedback-submitted", {
+            detail: { content, feedbackType },
+          }),
+        );
+
+        setTimeout(() => {
+          messageEl.textContent = "";
+          messageEl.className = "seriph-feedback-message";
+        }, 3000);
+      } catch (e) {
+        console.error("Failed to submit feedback:", e);
+        messageEl.textContent = e instanceof Error ? e.message : "Failed to submit feedback";
+        messageEl.className = "seriph-feedback-message seriph-error";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Send Feedback";
+      }
+    });
+  });
+</script>
+
+<style is:global>
+  @layer seriph {
+    .seriph-feedback {
+      --seriph-border-color: #e5e7eb;
+      --seriph-bg-color: white;
+      --seriph-text-color: inherit;
+      --seriph-text-muted: #6b7280;
+      --seriph-hover-bg: #f3f4f6;
+      --seriph-selected-bg: #dbeafe;
+      --seriph-selected-border: #3b82f6;
+      --seriph-button-bg: #3b82f6;
+      --seriph-button-text: white;
+      --seriph-button-hover: #2563eb;
+      --seriph-success-color: #16a34a;
+      --seriph-error-color: #dc2626;
+
+      font-family: inherit;
+    }
+
+    /* Dark theme */
+    .seriph-feedback.seriph-theme-dark {
+      --seriph-border-color: #374151;
+      --seriph-bg-color: #1f2937;
+      --seriph-text-color: #f3f4f6;
+      --seriph-text-muted: #9ca3af;
+      --seriph-hover-bg: #374151;
+      --seriph-selected-bg: rgba(59, 130, 246, 0.2);
+      --seriph-selected-border: #3b82f6;
+      --seriph-success-color: #22c55e;
+      --seriph-error-color: #ef4444;
+    }
+
+    /* Auto theme */
+    @media (prefers-color-scheme: dark) {
+      .seriph-feedback.seriph-theme-auto {
+        --seriph-border-color: #374151;
+        --seriph-bg-color: #1f2937;
+        --seriph-text-color: #f3f4f6;
+        --seriph-text-muted: #9ca3af;
+        --seriph-hover-bg: #374151;
+        --seriph-selected-bg: rgba(59, 130, 246, 0.2);
+        --seriph-selected-border: #3b82f6;
+        --seriph-success-color: #22c55e;
+        --seriph-error-color: #ef4444;
+      }
+    }
+
+    .seriph-feedback-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .seriph-feedback-type-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .seriph-feedback-type {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .seriph-feedback-type input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .seriph-feedback-type span {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.875rem;
+      border: 1px solid var(--seriph-border-color);
+      border-radius: 9999px;
+      transition: all 0.15s;
+      color: var(--seriph-text-muted);
+    }
+
+    .seriph-feedback-type:hover span {
+      background: var(--seriph-hover-bg);
+    }
+
+    .seriph-feedback-type input:checked + span {
+      background: var(--seriph-selected-bg);
+      border-color: var(--seriph-selected-border);
+      color: var(--seriph-selected-border);
+    }
+
+    .seriph-feedback-textarea {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 0.875rem;
+      border: 1px solid var(--seriph-border-color);
+      border-radius: 0.5rem;
+      background: var(--seriph-bg-color);
+      color: var(--seriph-text-color);
+      resize: vertical;
+      min-height: 80px;
+      font-family: inherit;
+    }
+
+    .seriph-feedback-textarea:focus {
+      outline: none;
+      border-color: var(--seriph-selected-border);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .seriph-feedback-textarea::placeholder {
+      color: var(--seriph-text-muted);
+    }
+
+    .seriph-feedback-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .seriph-feedback-message {
+      font-size: 0.875rem;
+      color: var(--seriph-text-muted);
+    }
+
+    .seriph-feedback-message.seriph-success {
+      color: var(--seriph-success-color);
+    }
+
+    .seriph-feedback-message.seriph-error {
+      color: var(--seriph-error-color);
+    }
+
+    .seriph-feedback-submit {
+      padding: 0.5rem 1rem;
+      background: var(--seriph-button-bg);
+      color: var(--seriph-button-text);
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .seriph-feedback-submit:hover:not(:disabled) {
+      background: var(--seriph-button-hover);
+    }
+
+    .seriph-feedback-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+</style>

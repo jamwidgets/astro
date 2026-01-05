@@ -1,0 +1,233 @@
+---
+/**
+ * Seriph Announcements Component
+ *
+ * Displays site-wide announcements/banners.
+ * Supports dismissible announcements with localStorage persistence.
+ *
+ * @example
+ * <Announcements siteKey={import.meta.env.SERIPH_SITE_KEY} />
+ */
+
+interface Props {
+  /** Your site key (required) */
+  siteKey: string;
+  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  endpoint?: string;
+  /** CSS class to add to the container */
+  class?: string;
+}
+
+const DEFAULT_ENDPOINT = "https://seriph.xyz";
+const API_PATH = "/api/v1";
+
+const {
+  siteKey,
+  endpoint = DEFAULT_ENDPOINT,
+  class: className = "",
+} = Astro.props;
+
+// Build the API URL
+const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
+---
+
+<div
+  class:list={["seriph-announcements", className]}
+  data-seriph-announcements
+  data-endpoint={baseUrl}
+  data-site-key={siteKey}
+></div>
+
+<script>
+  interface Announcement {
+    id: string;
+    content: string;
+    announcementType: "info" | "warning" | "success" | "error";
+    linkUrl?: string;
+    linkText?: string;
+    isDismissible: boolean;
+  }
+
+  // Get or create a visitor ID for anonymous users
+  const VISITOR_KEY = "seriph_visitor_id";
+  function getVisitorId(): string {
+    let id = localStorage.getItem(VISITOR_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(VISITOR_KEY, id);
+    }
+    return id;
+  }
+
+  document.querySelectorAll("[data-seriph-announcements]").forEach((container) => {
+    const endpoint = (container as HTMLElement).dataset.endpoint;
+    const siteKey = (container as HTMLElement).dataset.siteKey;
+
+    if (!endpoint || !siteKey) return;
+
+    const visitorId = getVisitorId();
+    const headers = {
+      "X-Seriph-Key": siteKey,
+      "X-Seriph-Visitor": visitorId,
+    };
+
+    async function loadAnnouncements() {
+      try {
+        const response = await fetch(`${endpoint}/announcements`, { headers });
+        if (!response.ok) return;
+        const data = await response.json();
+        const announcements: Announcement[] = data.announcements || [];
+        renderAnnouncements(announcements);
+      } catch (e) {
+        console.error("Failed to load announcements:", e);
+      }
+    }
+
+    function renderAnnouncements(announcements: Announcement[]) {
+      container.innerHTML = "";
+
+      announcements.forEach((announcement) => {
+        const el = document.createElement("div");
+        el.className = `seriph-announcement seriph-announcement-${announcement.announcementType}`;
+        el.dataset.announcementId = announcement.id;
+
+        let content = `<span class="seriph-announcement-content">${announcement.content}</span>`;
+
+        if (announcement.linkUrl) {
+          content += ` <a href="${announcement.linkUrl}" class="seriph-announcement-link">${announcement.linkText || "Learn more"}</a>`;
+        }
+
+        if (announcement.isDismissible) {
+          content += `
+            <button type="button" class="seriph-announcement-dismiss" aria-label="Dismiss">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          `;
+        }
+
+        el.innerHTML = content;
+
+        // Handle dismiss
+        const dismissBtn = el.querySelector(".seriph-announcement-dismiss");
+        dismissBtn?.addEventListener("click", async () => {
+          try {
+            await fetch(`${endpoint}/announcements/${announcement.id}/dismiss`, {
+              method: "POST",
+              headers,
+            });
+            el.remove();
+            container.dispatchEvent(
+              new CustomEvent("seriph:announcement-dismissed", {
+                detail: { id: announcement.id },
+              }),
+            );
+          } catch (e) {
+            console.error("Failed to dismiss announcement:", e);
+          }
+        });
+
+        container.appendChild(el);
+      });
+    }
+
+    loadAnnouncements();
+  });
+</script>
+
+<style is:global>
+  @layer seriph {
+    .seriph-announcements {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .seriph-announcement {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .seriph-announcement-info {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .seriph-announcement-warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .seriph-announcement-success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .seriph-announcement-error {
+      background: #fef2f2;
+      color: #991b1b;
+    }
+
+    .seriph-announcement-content {
+      flex: 1;
+    }
+
+    .seriph-announcement-link {
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .seriph-announcement-link:hover {
+      text-decoration: none;
+    }
+
+    .seriph-announcement-dismiss {
+      padding: 0.25rem;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.15s;
+      display: flex;
+    }
+
+    .seriph-announcement-dismiss:hover {
+      opacity: 1;
+    }
+
+    .seriph-announcement-dismiss svg {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    /* Dark mode adjustments */
+    @media (prefers-color-scheme: dark) {
+      .seriph-announcement-info {
+        background: rgba(59, 130, 246, 0.2);
+        color: #93c5fd;
+      }
+
+      .seriph-announcement-warning {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fcd34d;
+      }
+
+      .seriph-announcement-success {
+        background: rgba(34, 197, 94, 0.2);
+        color: #86efac;
+      }
+
+      .seriph-announcement-error {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+      }
+    }
+  }
+</style>

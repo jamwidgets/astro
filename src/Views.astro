@@ -1,0 +1,203 @@
+---
+/**
+ * Seriph Views Component
+ *
+ * Tracks page views and displays view count.
+ * Automatically records a view when the page loads.
+ *
+ * @example
+ * <Views
+ *   siteKey={import.meta.env.SERIPH_SITE_KEY}
+ *   pageId={Astro.url.pathname}
+ * />
+ */
+
+interface Props {
+  /** Your site key (required) */
+  siteKey: string;
+  /** Unique identifier for this page (e.g., slug or URL path) */
+  pageId: string;
+  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  endpoint?: string;
+  /** Show unique visitor count alongside total views (default: false) */
+  showUnique?: boolean;
+  /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
+  theme?: "light" | "dark" | "auto";
+  /** CSS class to add to the container */
+  class?: string;
+}
+
+const DEFAULT_ENDPOINT = "https://seriph.xyz";
+const API_PATH = "/api/v1";
+
+const {
+  siteKey,
+  pageId,
+  endpoint = DEFAULT_ENDPOINT,
+  showUnique = false,
+  theme = "light",
+  class: className = "",
+} = Astro.props;
+
+// Build the API URL
+const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
+---
+
+<div
+  class:list={["seriph-views", `seriph-theme-${theme}`, className]}
+  data-seriph-views
+  data-endpoint={baseUrl}
+  data-site-key={siteKey}
+  data-page-id={pageId}
+  data-show-unique={showUnique}
+>
+  <span class="seriph-views-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  </span>
+  <span class="seriph-views-count">-</span>
+  <span class="seriph-views-unique" style="display: none;"></span>
+</div>
+
+<script>
+  // Get or create a visitor ID for anonymous users
+  const VISITOR_KEY = "seriph_visitor_id";
+  function getVisitorId(): string {
+    let id = localStorage.getItem(VISITOR_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(VISITOR_KEY, id);
+    }
+    return id;
+  }
+
+  document.querySelectorAll("[data-seriph-views]").forEach((container) => {
+    const endpoint = (container as HTMLElement).dataset.endpoint;
+    const siteKey = (container as HTMLElement).dataset.siteKey;
+    const pageId = (container as HTMLElement).dataset.pageId;
+    const showUnique = (container as HTMLElement).dataset.showUnique === "true";
+
+    if (!endpoint || !siteKey || !pageId) return;
+
+    const visitorId = getVisitorId();
+    const headers = {
+      "X-Seriph-Key": siteKey,
+      "X-Seriph-Visitor": visitorId,
+    };
+
+    const countEl = container.querySelector(".seriph-views-count");
+    const uniqueEl = container.querySelector(".seriph-views-unique") as HTMLElement;
+
+    // Record the view
+    async function recordView() {
+      try {
+        const response = await fetch(
+          `${endpoint}/views/${encodeURIComponent(pageId!)}`,
+          {
+            method: "POST",
+            headers,
+          },
+        );
+        if (!response.ok) return;
+        const data = await response.json();
+        const result = data.record_view_response;
+
+        if (countEl) {
+          countEl.textContent = String(result?.views || 0);
+        }
+
+        if (showUnique && uniqueEl && result?.unique_visitors !== undefined) {
+          uniqueEl.textContent = `(${result.unique_visitors} unique)`;
+          uniqueEl.style.display = "";
+        }
+
+        container.dispatchEvent(
+          new CustomEvent("seriph:view-recorded", {
+            detail: result,
+          }),
+        );
+      } catch (e) {
+        console.error("Failed to record view:", e);
+        // Fallback: try to load existing counts
+        loadView();
+      }
+    }
+
+    // Load view count without recording
+    async function loadView() {
+      try {
+        const response = await fetch(
+          `${endpoint}/views/${encodeURIComponent(pageId!)}`,
+          { headers },
+        );
+        if (!response.ok) return;
+        const data = await response.json();
+        const result = data.page_view_counts;
+
+        if (countEl) {
+          countEl.textContent = String(result?.views || 0);
+        }
+
+        if (showUnique && uniqueEl && result?.uniqueVisitors !== undefined) {
+          uniqueEl.textContent = `(${result.uniqueVisitors} unique)`;
+          uniqueEl.style.display = "";
+        }
+      } catch (e) {
+        console.error("Failed to load view:", e);
+      }
+    }
+
+    // Record the view on page load
+    recordView();
+  });
+</script>
+
+<style is:global>
+  @layer seriph {
+    .seriph-views {
+      --seriph-text-color: #6b7280;
+      --seriph-icon-color: #9ca3af;
+
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.875rem;
+      color: var(--seriph-text-color);
+    }
+
+    /* Dark theme */
+    .seriph-views.seriph-theme-dark {
+      --seriph-text-color: #9ca3af;
+      --seriph-icon-color: #6b7280;
+    }
+
+    /* Auto theme - follows prefers-color-scheme */
+    @media (prefers-color-scheme: dark) {
+      .seriph-views.seriph-theme-auto {
+        --seriph-text-color: #9ca3af;
+        --seriph-icon-color: #6b7280;
+      }
+    }
+
+    .seriph-views-icon {
+      display: flex;
+      color: var(--seriph-icon-color);
+    }
+
+    .seriph-views-icon svg {
+      width: 1em;
+      height: 1em;
+    }
+
+    .seriph-views-count {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .seriph-views-unique {
+      color: var(--seriph-icon-color);
+      font-size: 0.75rem;
+    }
+  }
+</style>

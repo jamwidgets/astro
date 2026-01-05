@@ -1,0 +1,513 @@
+---
+/**
+ * Seriph Embed Component
+ *
+ * Hydrates widget placeholders embedded in post content.
+ * Place this component after your post content to activate
+ * any embedded polls, reactions, etc.
+ *
+ * @example
+ * <article set:html={post.content} />
+ * <Embed siteKey={import.meta.env.SERIPH_SITE_KEY} />
+ */
+
+interface Props {
+  /** Your site key (required) */
+  siteKey: string;
+  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  endpoint?: string;
+  /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
+  theme?: "light" | "dark" | "auto";
+}
+
+const DEFAULT_ENDPOINT = "https://seriph.xyz";
+const API_PATH = "/api/v1";
+
+const {
+  siteKey,
+  endpoint = DEFAULT_ENDPOINT,
+  theme = "light",
+} = Astro.props;
+
+const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
+---
+
+<seriph-embed
+  data-site-key={siteKey}
+  data-endpoint={baseUrl}
+  data-theme={theme}
+  style="display: none;"
+></seriph-embed>
+
+<script>
+  interface PollOption {
+    id: string;
+    text: string;
+  }
+
+  interface PollWithResults {
+    id: string;
+    question: string;
+    options: PollOption[];
+    settings: {
+      multiSelect: boolean;
+      showResults: "always" | "afterVote" | "afterEnd" | "never";
+    };
+    endsAt?: string;
+    isActive: boolean;
+    results: Record<string, number>;
+    totalVotes: number;
+    userVotes?: string[];
+  }
+
+  // Get or create a visitor ID for anonymous users
+  const VISITOR_KEY = "seriph_visitor_id";
+  function getVisitorId(): string {
+    let id = localStorage.getItem(VISITOR_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(VISITOR_KEY, id);
+    }
+    return id;
+  }
+
+  class SeriphEmbed extends HTMLElement {
+    connectedCallback() {
+      const siteKey = this.dataset.siteKey!;
+      const endpoint = this.dataset.endpoint!;
+      const theme = this.dataset.theme!;
+
+      // Find all poll placeholders and hydrate them
+      document.querySelectorAll('[data-seriph-embed="poll"]').forEach((el) => {
+        const slug = (el as HTMLElement).dataset.slug;
+        if (!slug) return;
+        this.hydratePoll(el as HTMLElement, { siteKey, endpoint, theme, slug });
+      });
+    }
+
+    hydratePoll(
+      container: HTMLElement,
+      config: { siteKey: string; endpoint: string; theme: string; slug: string },
+    ) {
+      // Setup container with Poll widget structure
+      container.className = `seriph-poll seriph-theme-${config.theme}`;
+      container.setAttribute("data-seriph-poll", "");
+      container.removeAttribute("data-seriph-embed");
+
+      // Inject poll HTML structure
+      container.innerHTML = `
+        <div class="seriph-poll-loading">
+          <span class="seriph-poll-spinner"></span>
+        </div>
+        <div class="seriph-poll-content" style="display: none;">
+          <h3 class="seriph-poll-question"></h3>
+          <div class="seriph-poll-options"></div>
+          <div class="seriph-poll-footer">
+            <span class="seriph-poll-total"></span>
+            <span class="seriph-poll-status"></span>
+          </div>
+          <button type="button" class="seriph-poll-submit" style="display: none;">Vote</button>
+        </div>
+        <div class="seriph-poll-error" style="display: none;"></div>
+      `;
+
+      // Initialize poll
+      this.initPoll(container, config);
+    }
+
+    async initPoll(
+      container: HTMLElement,
+      config: { siteKey: string; endpoint: string; theme: string; slug: string },
+    ) {
+      const visitorId = getVisitorId();
+      const headers = {
+        "X-Seriph-Key": config.siteKey,
+        "X-Seriph-Visitor": visitorId,
+      };
+
+      const loadingEl = container.querySelector(".seriph-poll-loading") as HTMLElement;
+      const contentEl = container.querySelector(".seriph-poll-content") as HTMLElement;
+      const errorEl = container.querySelector(".seriph-poll-error") as HTMLElement;
+      const questionEl = container.querySelector(".seriph-poll-question") as HTMLElement;
+      const optionsEl = container.querySelector(".seriph-poll-options") as HTMLElement;
+      const totalEl = container.querySelector(".seriph-poll-total") as HTMLElement;
+      const statusEl = container.querySelector(".seriph-poll-status") as HTMLElement;
+      const submitBtn = container.querySelector(".seriph-poll-submit") as HTMLButtonElement;
+
+      let poll: PollWithResults | null = null;
+      let selectedOptions: Set<string> = new Set();
+
+      async function loadPoll() {
+        try {
+          const response = await fetch(`${config.endpoint}/polls/${config.slug}`, { headers });
+          if (!response.ok) throw new Error("Failed to load poll");
+          const data = await response.json();
+          poll = data.poll_with_results;
+          renderPoll();
+        } catch (e) {
+          console.error("Failed to load poll:", e);
+          loadingEl.style.display = "none";
+          errorEl.style.display = "block";
+          errorEl.textContent = "Failed to load poll";
+        }
+      }
+
+      function renderPoll() {
+        if (!poll) return;
+
+        loadingEl.style.display = "none";
+        contentEl.style.display = "block";
+
+        questionEl.textContent = poll.question;
+
+        const hasVoted = poll.userVotes && poll.userVotes.length > 0;
+        const isEnded = poll.endsAt ? new Date(poll.endsAt) < new Date() : false;
+        const canVote = poll.isActive && !isEnded && !hasVoted;
+        const showResults = Object.keys(poll.results).length > 0;
+
+        // Pre-select user's votes if any
+        if (poll.userVotes) {
+          selectedOptions = new Set(poll.userVotes);
+        }
+
+        optionsEl.innerHTML = "";
+        poll.options.forEach((option) => {
+          const optionEl = document.createElement("div");
+          optionEl.className = "seriph-poll-option";
+
+          const votes = poll!.results[option.id] || 0;
+          const percent = poll!.totalVotes > 0 ? Math.round((votes / poll!.totalVotes) * 100) : 0;
+          const isSelected = selectedOptions.has(option.id);
+
+          if (canVote) {
+            // Interactive option
+            const inputType = poll!.settings.multiSelect ? "checkbox" : "radio";
+            optionEl.innerHTML = `
+              <label class="seriph-poll-label ${isSelected ? "seriph-selected" : ""}">
+                <input type="${inputType}" name="poll-${poll!.id}" value="${option.id}" ${isSelected ? "checked" : ""} />
+                <span class="seriph-poll-text">${option.text}</span>
+              </label>
+            `;
+            const input = optionEl.querySelector("input")!;
+            input.addEventListener("change", () => {
+              if (poll!.settings.multiSelect) {
+                if (input.checked) {
+                  selectedOptions.add(option.id);
+                } else {
+                  selectedOptions.delete(option.id);
+                }
+              } else {
+                selectedOptions = new Set([option.id]);
+              }
+              updateSubmitButton();
+              // Update visual selection
+              optionsEl.querySelectorAll(".seriph-poll-label").forEach((label) => {
+                const labelInput = label.querySelector("input") as HTMLInputElement;
+                label.classList.toggle("seriph-selected", labelInput.checked);
+              });
+            });
+          } else if (showResults) {
+            // Show results
+            optionEl.innerHTML = `
+              <div class="seriph-poll-result ${isSelected ? "seriph-voted" : ""}">
+                <div class="seriph-poll-bar" style="width: ${percent}%"></div>
+                <span class="seriph-poll-text">${option.text}</span>
+                <span class="seriph-poll-percent">${percent}%</span>
+              </div>
+            `;
+          } else {
+            // Show without results (voted but results hidden)
+            optionEl.innerHTML = `
+              <div class="seriph-poll-result seriph-no-results ${isSelected ? "seriph-voted" : ""}">
+                <span class="seriph-poll-text">${option.text}</span>
+              </div>
+            `;
+          }
+          optionsEl.appendChild(optionEl);
+        });
+
+        // Footer
+        if (showResults) {
+          totalEl.textContent = `${poll.totalVotes} vote${poll.totalVotes !== 1 ? "s" : ""}`;
+        } else {
+          totalEl.textContent = "";
+        }
+
+        if (isEnded) {
+          statusEl.textContent = "Ended";
+        } else if (!poll.isActive) {
+          statusEl.textContent = "Closed";
+        } else if (hasVoted) {
+          statusEl.textContent = "Voted";
+        } else {
+          statusEl.textContent = "";
+        }
+
+        // Submit button
+        if (canVote) {
+          submitBtn.style.display = "";
+          updateSubmitButton();
+        } else {
+          submitBtn.style.display = "none";
+        }
+      }
+
+      function updateSubmitButton() {
+        submitBtn.disabled = selectedOptions.size === 0;
+      }
+
+      submitBtn.addEventListener("click", async () => {
+        if (selectedOptions.size === 0) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Voting...";
+
+        try {
+          const response = await fetch(`${config.endpoint}/polls/${config.slug}/vote`, {
+            method: "POST",
+            headers: {
+              ...headers,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ selectedOptions: Array.from(selectedOptions) }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Failed to vote");
+          }
+
+          const data = await response.json();
+          const result = data.vote_response;
+
+          // Update poll with new results
+          if (poll) {
+            poll.results = result.results;
+            poll.totalVotes = result.totalVotes;
+            poll.userVotes = Array.from(selectedOptions);
+          }
+
+          container.dispatchEvent(
+            new CustomEvent("seriph:poll-voted", {
+              detail: { pollSlug: config.slug, selectedOptions: Array.from(selectedOptions), results: result },
+            }),
+          );
+
+          renderPoll();
+        } catch (e) {
+          console.error("Failed to vote:", e);
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Vote";
+          errorEl.style.display = "block";
+          errorEl.textContent = e instanceof Error ? e.message : "Failed to vote";
+          setTimeout(() => {
+            errorEl.style.display = "none";
+          }, 3000);
+        }
+      });
+
+      loadPoll();
+    }
+  }
+
+  customElements.define("seriph-embed", SeriphEmbed);
+</script>
+
+<style is:global>
+  @layer seriph {
+    .seriph-poll {
+      --seriph-border-color: #e5e7eb;
+      --seriph-bg-color: white;
+      --seriph-text-color: inherit;
+      --seriph-text-muted: #6b7280;
+      --seriph-hover-bg: #f3f4f6;
+      --seriph-selected-bg: #dbeafe;
+      --seriph-selected-border: #3b82f6;
+      --seriph-bar-bg: #dbeafe;
+      --seriph-voted-bar-bg: #3b82f6;
+      --seriph-button-bg: #3b82f6;
+      --seriph-button-text: white;
+      --seriph-button-hover: #2563eb;
+
+      font-family: inherit;
+    }
+
+    /* Dark theme */
+    .seriph-poll.seriph-theme-dark {
+      --seriph-border-color: #374151;
+      --seriph-bg-color: transparent;
+      --seriph-text-color: #f3f4f6;
+      --seriph-text-muted: #9ca3af;
+      --seriph-hover-bg: #374151;
+      --seriph-selected-bg: rgba(59, 130, 246, 0.2);
+      --seriph-selected-border: #3b82f6;
+      --seriph-bar-bg: rgba(59, 130, 246, 0.2);
+      --seriph-voted-bar-bg: #3b82f6;
+    }
+
+    /* Auto theme */
+    @media (prefers-color-scheme: dark) {
+      .seriph-poll.seriph-theme-auto {
+        --seriph-border-color: #374151;
+        --seriph-bg-color: transparent;
+        --seriph-text-color: #f3f4f6;
+        --seriph-text-muted: #9ca3af;
+        --seriph-hover-bg: #374151;
+        --seriph-selected-bg: rgba(59, 130, 246, 0.2);
+        --seriph-selected-border: #3b82f6;
+        --seriph-bar-bg: rgba(59, 130, 246, 0.2);
+        --seriph-voted-bar-bg: #3b82f6;
+      }
+    }
+
+    .seriph-poll-loading {
+      display: flex;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .seriph-poll-spinner {
+      width: 1.5rem;
+      height: 1.5rem;
+      border: 2px solid var(--seriph-border-color);
+      border-top-color: var(--seriph-button-bg);
+      border-radius: 50%;
+      animation: seriph-spin 0.8s linear infinite;
+    }
+
+    @keyframes seriph-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .seriph-poll-question {
+      font-weight: 600;
+      font-size: 1.125rem;
+      margin: 0 0 1rem;
+      color: var(--seriph-text-color);
+    }
+
+    .seriph-poll-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .seriph-poll-label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--seriph-border-color);
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .seriph-poll-label:hover {
+      background: var(--seriph-hover-bg);
+    }
+
+    .seriph-poll-label.seriph-selected {
+      background: var(--seriph-selected-bg);
+      border-color: var(--seriph-selected-border);
+    }
+
+    .seriph-poll-label input {
+      margin: 0;
+    }
+
+    .seriph-poll-result {
+      position: relative;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--seriph-border-color);
+      border-radius: 0.5rem;
+      overflow: hidden;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .seriph-poll-result.seriph-voted {
+      border-color: var(--seriph-selected-border);
+    }
+
+    .seriph-poll-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      background: var(--seriph-bar-bg);
+      transition: width 0.3s ease;
+    }
+
+    .seriph-poll-result.seriph-voted .seriph-poll-bar {
+      background: var(--seriph-voted-bar-bg);
+      opacity: 0.2;
+    }
+
+    .seriph-poll-text {
+      position: relative;
+      z-index: 1;
+    }
+
+    .seriph-poll-percent {
+      position: relative;
+      z-index: 1;
+      font-weight: 500;
+      font-size: 0.875rem;
+      color: var(--seriph-text-muted);
+    }
+
+    .seriph-poll-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--seriph-text-muted);
+    }
+
+    .seriph-poll-submit {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 0.625rem 1rem;
+      background: var(--seriph-button-bg);
+      color: var(--seriph-button-text);
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .seriph-poll-submit:hover:not(:disabled) {
+      background: var(--seriph-button-hover);
+    }
+
+    .seriph-poll-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .seriph-poll-error {
+      padding: 0.75rem;
+      background: #fef2f2;
+      color: #991b1b;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .seriph-theme-dark .seriph-poll-error,
+    .seriph-theme-auto .seriph-poll-error {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .seriph-theme-auto .seriph-poll-error {
+        background: rgba(239, 68, 68, 0.15);
+        color: #fca5a5;
+      }
+    }
+  }
+</style>

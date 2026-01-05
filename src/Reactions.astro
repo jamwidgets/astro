@@ -1,0 +1,305 @@
+---
+/**
+ * Seriph Reactions Component
+ *
+ * Displays reaction buttons (like, clap, etc.) for a page.
+ * Customize with CSS custom properties.
+ *
+ * @example
+ * <Reactions
+ *   siteKey={import.meta.env.SERIPH_SITE_KEY}
+ *   pageId={Astro.url.pathname}
+ *   reactions={['like', 'love', 'clap']}
+ * />
+ */
+
+interface Props {
+  /** Your site key (required) */
+  siteKey: string;
+  /** Unique identifier for this page (e.g., slug or URL path) */
+  pageId: string;
+  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  endpoint?: string;
+  /** Reaction types to show (default: ['like']) */
+  reactions?: string[];
+  /** Custom icons for reaction types (emoji or text) */
+  icons?: Record<string, string>;
+  /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
+  theme?: "light" | "dark" | "auto";
+  /** CSS class to add to the container */
+  class?: string;
+}
+
+const DEFAULT_ENDPOINT = "https://seriph.xyz";
+const API_PATH = "/api/v1";
+
+const defaultIcons: Record<string, string> = {
+  like: "\u{1F44D}",
+  love: "\u{2764}\u{FE0F}",
+  clap: "\u{1F44F}",
+  fire: "\u{1F525}",
+  think: "\u{1F914}",
+  sad: "\u{1F622}",
+  laugh: "\u{1F602}",
+};
+
+const {
+  siteKey,
+  pageId,
+  endpoint = DEFAULT_ENDPOINT,
+  reactions = ["like"],
+  icons = {},
+  theme = "light",
+  class: className = "",
+} = Astro.props;
+
+// Merge custom icons with defaults
+const mergedIcons = { ...defaultIcons, ...icons };
+
+function getIcon(type: string): string {
+  return mergedIcons[type] || type;
+}
+
+// Build the API URL
+const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
+---
+
+<div
+  class:list={["seriph-reactions", `seriph-theme-${theme}`, className]}
+  data-seriph-reactions
+  data-endpoint={baseUrl}
+  data-site-key={siteKey}
+  data-page-id={pageId}
+>
+  {
+    reactions.map((reaction) => (
+      <button
+        type="button"
+        class="seriph-reaction-btn"
+        data-reaction-type={reaction}
+        title={reaction}
+      >
+        <span class="seriph-reaction-icon">{getIcon(reaction)}</span>
+        <span class="seriph-reaction-count">0</span>
+      </button>
+    ))
+  }
+</div>
+
+<script>
+  // Get or create a visitor ID for anonymous users
+  const VISITOR_KEY = "seriph_visitor_id";
+  function getVisitorId(): string {
+    let id = localStorage.getItem(VISITOR_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(VISITOR_KEY, id);
+    }
+    return id;
+  }
+
+  document.querySelectorAll("[data-seriph-reactions]").forEach((container) => {
+    const endpoint = (container as HTMLElement).dataset.endpoint;
+    const siteKey = (container as HTMLElement).dataset.siteKey;
+    const pageId = (container as HTMLElement).dataset.pageId;
+
+    if (!endpoint || !siteKey || !pageId) return;
+
+    const visitorId = getVisitorId();
+    const headers = {
+      "X-Seriph-Key": siteKey,
+      "X-Seriph-Visitor": visitorId,
+    };
+
+    // Track which reactions the user has made (stored in localStorage)
+    const storageKey = `seriph-reactions-${pageId}`;
+    const userReactions = new Set<string>(
+      JSON.parse(localStorage.getItem(storageKey) || "[]")
+    );
+
+    // Apply initial "reacted" state
+    container.querySelectorAll(".seriph-reaction-btn").forEach((btn) => {
+      const type = (btn as HTMLElement).dataset.reactionType;
+      if (type && userReactions.has(type)) {
+        btn.classList.add("seriph-reacted");
+      }
+    });
+
+    async function loadReactions() {
+      try {
+        const response = await fetch(
+          `${endpoint}/reactions/${encodeURIComponent(pageId!)}`,
+          { headers },
+        );
+        if (!response.ok) return;
+        const data = await response.json();
+        const counts = data.reaction_counts?.counts || {};
+
+        container.querySelectorAll(".seriph-reaction-btn").forEach((btn) => {
+          const type = (btn as HTMLElement).dataset.reactionType;
+          const countEl = btn.querySelector(".seriph-reaction-count");
+          if (type && countEl) {
+            countEl.textContent = String(counts[type] || 0);
+          }
+        });
+      } catch (e) {
+        console.error("Failed to load reactions:", e);
+      }
+    }
+
+    container.querySelectorAll(".seriph-reaction-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const type = (btn as HTMLElement).dataset.reactionType;
+        if (!type) return;
+
+        const isReacted = userReactions.has(type);
+        btn.classList.add("seriph-loading");
+
+        try {
+          const response = await fetch(
+            `${endpoint}/reactions/${encodeURIComponent(pageId)}`,
+            {
+              method: isReacted ? "DELETE" : "POST",
+              headers: {
+                ...headers,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ reactionType: type }),
+            },
+          );
+
+          if (!response.ok) throw new Error(isReacted ? "Failed to remove reaction" : "Failed to add reaction");
+
+          const data = await response.json();
+          const countEl = btn.querySelector(".seriph-reaction-count");
+          if (countEl) {
+            countEl.textContent = String(data.reaction?.count || 0);
+          }
+
+          if (isReacted) {
+            // Remove reaction
+            btn.classList.remove("seriph-reacted");
+            userReactions.delete(type);
+            container.dispatchEvent(
+              new CustomEvent("seriph:reaction-removed", {
+                detail: data.reaction,
+              }),
+            );
+          } else {
+            // Add reaction
+            btn.classList.add("seriph-reacted");
+            userReactions.add(type);
+            container.dispatchEvent(
+              new CustomEvent("seriph:reaction-added", {
+                detail: data.reaction,
+              }),
+            );
+          }
+          localStorage.setItem(storageKey, JSON.stringify([...userReactions]));
+        } catch (e) {
+          console.error(isReacted ? "Failed to remove reaction:" : "Failed to add reaction:", e);
+        } finally {
+          btn.classList.remove("seriph-loading");
+        }
+      });
+    });
+
+    loadReactions();
+  });
+</script>
+
+<style is:global>
+  @layer seriph {
+    .seriph-reactions {
+      --seriph-border-color: #e5e7eb;
+      --seriph-button-bg: white;
+      --seriph-hover-bg: #f3f4f6;
+      --seriph-hover-border: #d1d5db;
+      --seriph-active-bg: #dbeafe;
+      --seriph-active-border: #93c5fd;
+      --seriph-active-hover-bg: #bfdbfe;
+      --seriph-count-color: #6b7280;
+      --seriph-active-text: #1d4ed8;
+
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Dark theme */
+    .seriph-reactions.seriph-theme-dark {
+      --seriph-border-color: #374151;
+      --seriph-button-bg: transparent;
+      --seriph-hover-bg: #374151;
+      --seriph-hover-border: #4b5563;
+      --seriph-active-bg: rgba(59, 130, 246, 0.2);
+      --seriph-active-border: #3b82f6;
+      --seriph-active-hover-bg: rgba(59, 130, 246, 0.3);
+      --seriph-count-color: #9ca3af;
+      --seriph-active-text: #60a5fa;
+    }
+
+    /* Auto theme - follows prefers-color-scheme */
+    @media (prefers-color-scheme: dark) {
+      .seriph-reactions.seriph-theme-auto {
+        --seriph-border-color: #374151;
+        --seriph-button-bg: transparent;
+        --seriph-hover-bg: #374151;
+        --seriph-hover-border: #4b5563;
+        --seriph-active-bg: rgba(59, 130, 246, 0.2);
+        --seriph-active-border: #3b82f6;
+        --seriph-active-hover-bg: rgba(59, 130, 246, 0.3);
+        --seriph-count-color: #9ca3af;
+        --seriph-active-text: #60a5fa;
+      }
+    }
+
+    .seriph-reaction-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--seriph-border-color);
+      border-radius: 9999px;
+      background: var(--seriph-button-bg);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      font-size: 0.875rem;
+    }
+
+    .seriph-reaction-btn:hover:not(.seriph-reacted) {
+      background: var(--seriph-hover-bg);
+      border-color: var(--seriph-hover-border);
+    }
+
+    .seriph-reaction-btn.seriph-reacted {
+      background: var(--seriph-active-bg);
+      border-color: var(--seriph-active-border);
+    }
+
+    .seriph-reaction-btn.seriph-reacted:hover {
+      background: var(--seriph-active-hover-bg);
+    }
+
+    .seriph-reaction-btn.seriph-loading {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .seriph-reaction-icon {
+      font-size: 1.125rem;
+      line-height: 1;
+    }
+
+    .seriph-reaction-count {
+      color: var(--seriph-count-color);
+      font-weight: 500;
+      min-width: 1ch;
+    }
+
+    .seriph-reacted .seriph-reaction-count {
+      color: var(--seriph-active-text);
+    }
+  }
+</style>
