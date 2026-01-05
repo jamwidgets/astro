@@ -146,27 +146,36 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 </script>
 
 <style is:global>
-  @layer seriph {
-    .seriph-waitlist {
-      --seriph-border-color: #e5e7eb;
-      --seriph-bg-color: white;
-      --seriph-text-color: inherit;
-      --seriph-text-muted: #6b7280;
-      --seriph-button-bg: #3b82f6;
-      --seriph-button-text: white;
-      --seriph-button-hover: #2563eb;
-      --seriph-success-color: #16a34a;
-      --seriph-success-bg: #dcfce7;
-      --seriph-error-color: #dc2626;
-      --seriph-error-bg: #fef2f2;
+  .seriph-waitlist {
+    --seriph-border-color: #9ca3af;
+    --seriph-bg-color: white;
+    --seriph-text-color: inherit;
+    --seriph-text-muted: #6b7280;
+    --seriph-button-bg: #3b82f6;
+    --seriph-button-text: white;
+    --seriph-button-hover: #2563eb;
+    --seriph-success-color: #16a34a;
+    --seriph-success-bg: #dcfce7;
+    --seriph-error-color: #dc2626;
+    --seriph-error-bg: #fef2f2;
+    font-family: inherit;
+  }
 
-      font-family: inherit;
-    }
+  .seriph-waitlist.seriph-theme-dark {
+    --seriph-border-color: #9ca3af;
+    --seriph-bg-color: #374151;
+    --seriph-text-color: #f3f4f6;
+    --seriph-text-muted: #9ca3af;
+    --seriph-success-color: #22c55e;
+    --seriph-success-bg: rgba(34, 197, 94, 0.15);
+    --seriph-error-color: #ef4444;
+    --seriph-error-bg: rgba(239, 68, 68, 0.15);
+  }
 
-    /* Dark theme */
-    .seriph-waitlist.seriph-theme-dark {
-      --seriph-border-color: #374151;
-      --seriph-bg-color: #1f2937;
+  @media (prefers-color-scheme: dark) {
+    .seriph-waitlist.seriph-theme-auto {
+      --seriph-border-color: #9ca3af;
+      --seriph-bg-color: #374151;
       --seriph-text-color: #f3f4f6;
       --seriph-text-muted: #9ca3af;
       --seriph-success-color: #22c55e;
@@ -174,96 +183,80 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       --seriph-error-color: #ef4444;
       --seriph-error-bg: rgba(239, 68, 68, 0.15);
     }
+  }
 
-    /* Auto theme */
-    @media (prefers-color-scheme: dark) {
-      .seriph-waitlist.seriph-theme-auto {
-        --seriph-border-color: #374151;
-        --seriph-bg-color: #1f2937;
-        --seriph-text-color: #f3f4f6;
-        --seriph-text-muted: #9ca3af;
-        --seriph-success-color: #22c55e;
-        --seriph-success-bg: rgba(34, 197, 94, 0.15);
-        --seriph-error-color: #ef4444;
-        --seriph-error-bg: rgba(239, 68, 68, 0.15);
-      }
-    }
+  .seriph-waitlist-form {
+    display: flex;
+    gap: 0.5rem;
+  }
 
+  .seriph-waitlist .seriph-waitlist-input {
+    flex: 1;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    border: 1px solid var(--seriph-border-color);
+    border-radius: 0.5rem;
+    background: var(--seriph-bg-color);
+    color: var(--seriph-text-color);
+    font-family: inherit;
+    min-width: 0;
+  }
+
+  .seriph-waitlist .seriph-waitlist-input:focus {
+    outline: none;
+    border-color: var(--seriph-button-bg);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+
+  .seriph-waitlist .seriph-waitlist-input::placeholder {
+    color: var(--seriph-text-muted);
+  }
+
+  .seriph-waitlist .seriph-waitlist-submit {
+    padding: 0.625rem 1rem;
+    background: var(--seriph-button-bg);
+    color: var(--seriph-button-text);
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+
+  .seriph-waitlist .seriph-waitlist-submit:hover:not(:disabled) {
+    background: var(--seriph-button-hover);
+  }
+
+  .seriph-waitlist .seriph-waitlist-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .seriph-waitlist-message {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 0.5rem;
+    text-align: center;
+  }
+
+  .seriph-waitlist-message.seriph-success {
+    background: var(--seriph-success-bg);
+    color: var(--seriph-success-color);
+  }
+
+  .seriph-waitlist-message.seriph-error {
+    background: var(--seriph-error-bg);
+    color: var(--seriph-error-color);
+  }
+
+  @media (max-width: 400px) {
     .seriph-waitlist-form {
-      display: flex;
-      gap: 0.5rem;
+      flex-direction: column;
     }
-
-    .seriph-waitlist-input {
-      flex: 1;
-      padding: 0.625rem 0.875rem;
-      font-size: 0.875rem;
-      border: 1px solid var(--seriph-border-color);
-      border-radius: 0.5rem;
-      background: var(--seriph-bg-color);
-      color: var(--seriph-text-color);
-      font-family: inherit;
-      min-width: 0;
-    }
-
-    .seriph-waitlist-input:focus {
-      outline: none;
-      border-color: var(--seriph-button-bg);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-
-    .seriph-waitlist-input::placeholder {
-      color: var(--seriph-text-muted);
-    }
-
-    .seriph-waitlist-submit {
-      padding: 0.625rem 1rem;
-      background: var(--seriph-button-bg);
-      color: var(--seriph-button-text);
-      border: none;
-      border-radius: 0.5rem;
-      font-size: 0.875rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.15s;
-      white-space: nowrap;
-    }
-
-    .seriph-waitlist-submit:hover:not(:disabled) {
-      background: var(--seriph-button-hover);
-    }
-
-    .seriph-waitlist-submit:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .seriph-waitlist-message {
-      padding: 0.75rem 1rem;
-      font-size: 0.875rem;
-      border-radius: 0.5rem;
-      text-align: center;
-    }
-
-    .seriph-waitlist-message.seriph-success {
-      background: var(--seriph-success-bg);
-      color: var(--seriph-success-color);
-    }
-
-    .seriph-waitlist-message.seriph-error {
-      background: var(--seriph-error-bg);
-      color: var(--seriph-error-color);
-    }
-
-    /* Responsive: stack on small screens */
-    @media (max-width: 400px) {
-      .seriph-waitlist-form {
-        flex-direction: column;
-      }
-
-      .seriph-waitlist-submit {
-        width: 100%;
-      }
+    .seriph-waitlist .seriph-waitlist-submit {
+      width: 100%;
     }
   }
 </style>

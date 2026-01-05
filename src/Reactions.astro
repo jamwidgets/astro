@@ -133,13 +133,27 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
         );
         if (!response.ok) return;
         const data = await response.json();
-        const counts = data.reaction_counts?.counts || {};
+        const result = data.reaction_counts_with_user;
+        const counts = result?.counts || {};
+        const serverUserReactions = result?.userReactions || [];
+
+        // Sync with server's user reactions
+        serverUserReactions.forEach((type: string) => userReactions.add(type));
+        localStorage.setItem(storageKey, JSON.stringify([...userReactions]));
 
         container.querySelectorAll(".seriph-reaction-btn").forEach((btn) => {
           const type = (btn as HTMLElement).dataset.reactionType;
           const countEl = btn.querySelector(".seriph-reaction-count");
-          if (type && countEl) {
-            countEl.textContent = String(counts[type] || 0);
+          if (type) {
+            if (countEl) {
+              countEl.textContent = String(counts[type] || 0);
+            }
+            // Update visual state based on server data
+            if (userReactions.has(type)) {
+              btn.classList.add("seriph-reacted");
+            } else {
+              btn.classList.remove("seriph-reacted");
+            }
           }
         });
       } catch (e) {
@@ -209,25 +223,38 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 </script>
 
 <style is:global>
-  @layer seriph {
-    .seriph-reactions {
-      --seriph-border-color: #e5e7eb;
-      --seriph-button-bg: white;
-      --seriph-hover-bg: #f3f4f6;
-      --seriph-hover-border: #d1d5db;
-      --seriph-active-bg: #dbeafe;
-      --seriph-active-border: #93c5fd;
-      --seriph-active-hover-bg: #bfdbfe;
-      --seriph-count-color: #6b7280;
-      --seriph-active-text: #1d4ed8;
+  .seriph-reactions {
+    --seriph-border-color: #e5e7eb;
+    --seriph-button-bg: white;
+    --seriph-hover-bg: #f3f4f6;
+    --seriph-hover-border: #d1d5db;
+    --seriph-active-bg: #dbeafe;
+    --seriph-active-border: #93c5fd;
+    --seriph-active-hover-bg: #bfdbfe;
+    --seriph-count-color: #6b7280;
+    --seriph-active-text: #1d4ed8;
 
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
 
-    /* Dark theme */
-    .seriph-reactions.seriph-theme-dark {
+  /* Dark theme */
+  .seriph-reactions.seriph-theme-dark {
+    --seriph-border-color: #374151;
+    --seriph-button-bg: transparent;
+    --seriph-hover-bg: #374151;
+    --seriph-hover-border: #4b5563;
+    --seriph-active-bg: rgba(59, 130, 246, 0.2);
+    --seriph-active-border: #3b82f6;
+    --seriph-active-hover-bg: rgba(59, 130, 246, 0.3);
+    --seriph-count-color: #9ca3af;
+    --seriph-active-text: #60a5fa;
+  }
+
+  /* Auto theme - follows prefers-color-scheme */
+  @media (prefers-color-scheme: dark) {
+    .seriph-reactions.seriph-theme-auto {
       --seriph-border-color: #374151;
       --seriph-button-bg: transparent;
       --seriph-hover-bg: #374151;
@@ -238,68 +265,53 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       --seriph-count-color: #9ca3af;
       --seriph-active-text: #60a5fa;
     }
+  }
 
-    /* Auto theme - follows prefers-color-scheme */
-    @media (prefers-color-scheme: dark) {
-      .seriph-reactions.seriph-theme-auto {
-        --seriph-border-color: #374151;
-        --seriph-button-bg: transparent;
-        --seriph-hover-bg: #374151;
-        --seriph-hover-border: #4b5563;
-        --seriph-active-bg: rgba(59, 130, 246, 0.2);
-        --seriph-active-border: #3b82f6;
-        --seriph-active-hover-bg: rgba(59, 130, 246, 0.3);
-        --seriph-count-color: #9ca3af;
-        --seriph-active-text: #60a5fa;
-      }
-    }
+  .seriph-reaction-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--seriph-border-color);
+    border-radius: 9999px;
+    background: var(--seriph-button-bg);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    font-size: 0.875rem;
+  }
 
-    .seriph-reaction-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.375rem;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid var(--seriph-border-color);
-      border-radius: 9999px;
-      background: var(--seriph-button-bg);
-      cursor: pointer;
-      transition: all 0.15s ease;
-      font-family: inherit;
-      font-size: 0.875rem;
-    }
+  .seriph-reaction-btn:hover:not(.seriph-reacted) {
+    background: var(--seriph-hover-bg);
+    border-color: var(--seriph-hover-border);
+  }
 
-    .seriph-reaction-btn:hover:not(.seriph-reacted) {
-      background: var(--seriph-hover-bg);
-      border-color: var(--seriph-hover-border);
-    }
+  .seriph-reaction-btn.seriph-reacted {
+    background: var(--seriph-active-bg);
+    border-color: var(--seriph-active-border);
+  }
 
-    .seriph-reaction-btn.seriph-reacted {
-      background: var(--seriph-active-bg);
-      border-color: var(--seriph-active-border);
-    }
+  .seriph-reaction-btn.seriph-reacted:hover {
+    background: var(--seriph-active-hover-bg);
+  }
 
-    .seriph-reaction-btn.seriph-reacted:hover {
-      background: var(--seriph-active-hover-bg);
-    }
+  .seriph-reaction-btn.seriph-loading {
+    opacity: 0.6;
+    cursor: wait;
+  }
 
-    .seriph-reaction-btn.seriph-loading {
-      opacity: 0.6;
-      cursor: wait;
-    }
+  .seriph-reaction-icon {
+    font-size: 1.125rem;
+    line-height: 1;
+  }
 
-    .seriph-reaction-icon {
-      font-size: 1.125rem;
-      line-height: 1;
-    }
+  .seriph-reaction-count {
+    color: var(--seriph-count-color);
+    font-weight: 500;
+    min-width: 1ch;
+  }
 
-    .seriph-reaction-count {
-      color: var(--seriph-count-color);
-      font-weight: 500;
-      min-width: 1ch;
-    }
-
-    .seriph-reacted .seriph-reaction-count {
-      color: var(--seriph-active-text);
-    }
+  .seriph-reacted .seriph-reaction-count {
+    color: var(--seriph-active-text);
   }
 </style>

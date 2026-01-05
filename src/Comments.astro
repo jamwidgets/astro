@@ -264,29 +264,47 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 </script>
 
 <style is:global>
-  @layer seriph {
-    .seriph-comments {
-      --seriph-border-color: #e5e7eb;
-      --seriph-bg-color: #f9fafb;
-      --seriph-text-color: inherit;
-      --seriph-text-muted: #6b7280;
-      --seriph-input-bg: white;
-      --seriph-focus-color: #3b82f6;
-      --seriph-focus-ring: rgba(59, 130, 246, 0.2);
-      --seriph-button-bg: #3b82f6;
-      --seriph-button-hover: #2563eb;
-      --seriph-button-text: white;
-      --seriph-notice-bg: #fef3c7;
-      --seriph-notice-text: #92400e;
-    }
+  .seriph-comments {
+    --seriph-border-color: #e5e7eb;
+    --seriph-bg-color: #f9fafb;
+    --seriph-text-color: inherit;
+    --seriph-text-muted: #6b7280;
+    --seriph-input-bg: white;
+    --seriph-input-border: #9ca3af;
+    --seriph-focus-color: #3b82f6;
+    --seriph-focus-ring: rgba(59, 130, 246, 0.2);
+    --seriph-button-bg: #3b82f6;
+    --seriph-button-hover: #2563eb;
+    --seriph-button-text: white;
+    --seriph-notice-bg: #fef3c7;
+    --seriph-notice-text: #92400e;
+    color: var(--seriph-text-color);
+  }
 
-    /* Dark theme */
-    .seriph-comments.seriph-theme-dark {
-      --seriph-border-color: #374151;
+  .seriph-comments.seriph-theme-dark {
+    --seriph-border-color: #4b5563;
+    --seriph-bg-color: transparent;
+    --seriph-text-color: #f3f4f6;
+    --seriph-text-muted: #9ca3af;
+    --seriph-input-bg: #374151;
+    --seriph-input-border: #9ca3af;
+    --seriph-focus-color: #60a5fa;
+    --seriph-focus-ring: rgba(96, 165, 250, 0.3);
+    --seriph-button-bg: #3b82f6;
+    --seriph-button-hover: #60a5fa;
+    --seriph-button-text: white;
+    --seriph-notice-bg: #422006;
+    --seriph-notice-text: #fcd34d;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .seriph-comments.seriph-theme-auto {
+      --seriph-border-color: #4b5563;
       --seriph-bg-color: transparent;
       --seriph-text-color: #f3f4f6;
       --seriph-text-muted: #9ca3af;
-      --seriph-input-bg: #1f2937;
+      --seriph-input-bg: #374151;
+      --seriph-input-border: #9ca3af;
       --seriph-focus-color: #60a5fa;
       --seriph-focus-ring: rgba(96, 165, 250, 0.3);
       --seriph-button-bg: #3b82f6;
@@ -295,195 +313,169 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       --seriph-notice-bg: #422006;
       --seriph-notice-text: #fcd34d;
     }
+  }
 
-    /* Auto theme - follows prefers-color-scheme */
-    @media (prefers-color-scheme: dark) {
-      .seriph-comments.seriph-theme-auto {
-        --seriph-border-color: #374151;
-        --seriph-bg-color: transparent;
-        --seriph-text-color: #f3f4f6;
-        --seriph-text-muted: #9ca3af;
-        --seriph-input-bg: #1f2937;
-        --seriph-focus-color: #60a5fa;
-        --seriph-focus-ring: rgba(96, 165, 250, 0.3);
-        --seriph-button-bg: #3b82f6;
-        --seriph-button-hover: #60a5fa;
-        --seriph-button-text: white;
-        --seriph-notice-bg: #422006;
-        --seriph-notice-text: #fcd34d;
-      }
-    }
+  .seriph-comments-form {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--seriph-border-color);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
 
-    .seriph-comments {
-      color: var(--seriph-text-color);
-    }
-
+  @media (min-width: 480px) {
     .seriph-comments-form {
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--seriph-border-color);
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.5rem;
+      grid-template-columns: 1fr 1fr;
     }
-
-    @media (min-width: 480px) {
-      .seriph-comments-form {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      /* Comment textarea and buttons span full width */
-      .seriph-comments-form .seriph-form-group:has(textarea),
-      .seriph-comments-form .seriph-reply-indicator,
-      .seriph-comments-form button[type="submit"] {
-        grid-column: 1 / -1;
-      }
-    }
-
-    .seriph-reply-indicator {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 0.75rem;
-      background: var(--seriph-notice-bg);
-      color: var(--seriph-notice-text);
-      border-radius: 0.25rem;
-      font-size: 0.8125rem;
+    .seriph-comments-form .seriph-form-group:has(textarea),
+    .seriph-comments-form .seriph-reply-indicator,
+    .seriph-comments-form button[type="submit"] {
       grid-column: 1 / -1;
     }
+  }
 
-    .seriph-cancel-reply {
-      margin-left: auto;
-      padding: 0.125rem 0.5rem;
-      background: transparent;
-      border: 1px solid currentColor;
-      border-radius: 0.25rem;
-      color: inherit;
-      font-size: 0.75rem;
-      cursor: pointer;
-    }
+  .seriph-reply-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--seriph-notice-bg);
+    color: var(--seriph-notice-text);
+    border-radius: 0.25rem;
+    font-size: 0.8125rem;
+    grid-column: 1 / -1;
+  }
 
-    .seriph-cancel-reply:hover {
-      background: rgba(0, 0, 0, 0.1);
-    }
+  .seriph-cancel-reply {
+    margin-left: auto;
+    padding: 0.125rem 0.5rem;
+    background: transparent;
+    border: 1px solid currentColor;
+    border-radius: 0.25rem;
+    color: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
 
-    .seriph-form-group {
-      margin-bottom: 0;
-    }
+  .seriph-form-group {
+    margin-bottom: 0;
+  }
 
-    .seriph-form-group label {
-      display: block;
-      margin-bottom: 0.125rem;
-      font-weight: 500;
-      font-size: 0.75rem;
-    }
+  .seriph-form-group label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+    font-size: 0.75rem;
+  }
 
-    .seriph-form-group input,
-    .seriph-form-group textarea {
-      width: 100%;
-      padding: 0.375rem 0.5rem;
-      border: 1px solid var(--seriph-border-color);
-      border-radius: 0.25rem;
-      font-size: 0.875rem;
-      background: var(--seriph-input-bg);
-      color: var(--seriph-text-color);
-    }
+  .seriph-comments .seriph-form-group input,
+  .seriph-comments .seriph-form-group textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--seriph-input-border);
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    background: var(--seriph-input-bg);
+    color: var(--seriph-text-color);
+    font-family: inherit;
+  }
 
-    .seriph-form-group textarea {
-      min-height: 4rem;
-    }
+  .seriph-comments .seriph-form-group textarea {
+    min-height: 5rem;
+    resize: vertical;
+  }
 
-    .seriph-form-group input:focus,
-    .seriph-form-group textarea:focus {
-      outline: none;
-      border-color: var(--seriph-focus-color);
-      box-shadow: 0 0 0 2px var(--seriph-focus-ring);
-    }
+  .seriph-comments .seriph-form-group input:focus,
+  .seriph-comments .seriph-form-group textarea:focus {
+    outline: none;
+    border-color: var(--seriph-focus-color);
+    box-shadow: 0 0 0 2px var(--seriph-focus-ring);
+  }
 
-    .seriph-comments-form button[type="submit"] {
-      padding: 0.375rem 0.75rem;
-      background: var(--seriph-button-bg);
-      color: var(--seriph-button-text);
-      border: none;
-      border-radius: 0.25rem;
-      font-weight: 500;
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
+  .seriph-comments .seriph-comments-form button[type="submit"] {
+    padding: 0.5rem 1rem;
+    background: var(--seriph-button-bg);
+    color: var(--seriph-button-text);
+    border: none;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
 
-    .seriph-comments-form button[type="submit"]:hover {
-      background: var(--seriph-button-hover);
-    }
+  .seriph-comments .seriph-comments-form button[type="submit"]:hover {
+    background: var(--seriph-button-hover);
+  }
 
-    .seriph-comments-form button[type="submit"]:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
+  .seriph-comments .seriph-comments-form button[type="submit"]:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 
-    .seriph-comment {
-      padding: 0.75rem;
-      background: var(--seriph-bg-color);
-      border: 1px solid var(--seriph-border-color);
-      border-radius: 0.375rem;
-      margin-bottom: 0.5rem;
-    }
+  .seriph-comment {
+    padding: 0.75rem;
+    background: var(--seriph-bg-color);
+    border: 1px solid var(--seriph-border-color);
+    border-radius: 0.375rem;
+    margin-bottom: 0.5rem;
+  }
 
-    .seriph-comment-header {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-      margin-bottom: 0.25rem;
-      font-size: 0.8125rem;
-    }
+  .seriph-comment-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.25rem;
+    font-size: 0.8125rem;
+  }
 
-    .seriph-comment-author {
-      font-weight: 600;
-    }
+  .seriph-comment-author {
+    font-weight: 600;
+  }
 
-    .seriph-comment-date {
-      color: var(--seriph-text-muted);
-      font-size: 0.75rem;
-    }
+  .seriph-comment-date {
+    color: var(--seriph-text-muted);
+    font-size: 0.75rem;
+  }
 
-    .seriph-comment-content {
-      white-space: pre-wrap;
-      font-size: 0.875rem;
-    }
+  .seriph-comment-content {
+    white-space: pre-wrap;
+    font-size: 0.875rem;
+  }
 
-    .seriph-reply-btn {
-      margin-top: 0.5rem;
-      padding: 0.125rem 0.5rem;
-      background: transparent;
-      border: none;
-      color: var(--seriph-text-muted);
-      font-size: 0.75rem;
-      cursor: pointer;
-    }
+  .seriph-reply-btn {
+    margin-top: 0.5rem;
+    padding: 0.125rem 0.5rem;
+    background: transparent;
+    border: none;
+    color: var(--seriph-text-muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
 
-    .seriph-reply-btn:hover {
-      color: var(--seriph-focus-color);
-      text-decoration: underline;
-    }
+  .seriph-reply-btn:hover {
+    color: var(--seriph-focus-color);
+    text-decoration: underline;
+  }
 
-    .seriph-comment-replies {
-      margin-left: 1rem;
-      margin-top: 0.5rem;
-    }
+  .seriph-comment-replies {
+    margin-left: 1rem;
+    margin-top: 0.5rem;
+  }
 
-    .seriph-comments-empty {
-      color: var(--seriph-text-muted);
-      font-style: italic;
-      font-size: 0.875rem;
-    }
+  .seriph-comments-empty {
+    color: var(--seriph-text-muted);
+    font-style: italic;
+    font-size: 0.875rem;
+  }
 
-    .seriph-comment-notice {
-      margin-top: 0.5rem;
-      padding: 0.375rem 0.5rem;
-      background: var(--seriph-notice-bg);
-      color: var(--seriph-notice-text);
-      border-radius: 0.25rem;
-      font-size: 0.8125rem;
-    }
+  .seriph-comment-notice {
+    margin-top: 0.5rem;
+    padding: 0.375rem 0.5rem;
+    background: var(--seriph-notice-bg);
+    color: var(--seriph-notice-text);
+    border-radius: 0.25rem;
+    font-size: 0.8125rem;
   }
 </style>
