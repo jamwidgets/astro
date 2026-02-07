@@ -1,6 +1,6 @@
 ---
 /**
- * Seriph Embed Component
+ * JamWidgets Embed Component
  *
  * Hydrates widget placeholders embedded in post content.
  * Place this component after your post content to activate
@@ -8,19 +8,19 @@
  *
  * @example
  * <article set:html={post.content} />
- * <Embed siteKey={import.meta.env.SERIPH_SITE_KEY} />
+ * <Embed siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} />
  */
 
 interface Props {
   /** Your site key (required) */
   siteKey: string;
-  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
   theme?: "light" | "dark" | "auto";
 }
 
-const DEFAULT_ENDPOINT = "https://seriph.xyz";
+const DEFAULT_ENDPOINT = "https://jamwidgets.com";
 const API_PATH = "/api/v1";
 
 const {
@@ -32,12 +32,12 @@ const {
 const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 ---
 
-<seriph-embed
+<jamwidgets-embed
   data-site-key={siteKey}
   data-endpoint={baseUrl}
   data-theme={theme}
   style="display: none;"
-></seriph-embed>
+></jamwidgets-embed>
 
 <script>
   interface PollOption {
@@ -61,7 +61,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
   }
 
   // Get or create a visitor ID for anonymous users
-  const VISITOR_KEY = "seriph_visitor_id";
+  const VISITOR_KEY = "jamwidgets_visitor_id";
   function getVisitorId(): string {
     let id = localStorage.getItem(VISITOR_KEY);
     if (!id) {
@@ -71,14 +71,14 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
     return id;
   }
 
-  class SeriphEmbed extends HTMLElement {
+  class JamWidgetsEmbed extends HTMLElement {
     connectedCallback() {
       const siteKey = this.dataset.siteKey!;
       const endpoint = this.dataset.endpoint!;
       const theme = this.dataset.theme!;
 
       // Find all poll placeholders and hydrate them
-      document.querySelectorAll('[data-seriph-embed="poll"]').forEach((el) => {
+      document.querySelectorAll('[data-jamwidgets-embed="poll"]').forEach((el) => {
         const slug = (el as HTMLElement).dataset.slug;
         if (!slug) return;
         this.hydratePoll(el as HTMLElement, { siteKey, endpoint, theme, slug });
@@ -90,25 +90,25 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       config: { siteKey: string; endpoint: string; theme: string; slug: string },
     ) {
       // Setup container with Poll widget structure
-      container.className = `seriph-poll seriph-theme-${config.theme}`;
-      container.setAttribute("data-seriph-poll", "");
-      container.removeAttribute("data-seriph-embed");
+      container.className = `jamwidgets-poll jamwidgets-theme-${config.theme}`;
+      container.setAttribute("data-jamwidgets-poll", "");
+      container.removeAttribute("data-jamwidgets-embed");
 
       // Inject poll HTML structure
       container.innerHTML = `
-        <div class="seriph-poll-loading">
-          <span class="seriph-poll-spinner"></span>
+        <div class="jamwidgets-poll-loading">
+          <span class="jamwidgets-poll-spinner"></span>
         </div>
-        <div class="seriph-poll-content" style="display: none;">
-          <h3 class="seriph-poll-question"></h3>
-          <div class="seriph-poll-options"></div>
-          <div class="seriph-poll-footer">
-            <span class="seriph-poll-total"></span>
-            <span class="seriph-poll-status"></span>
+        <div class="jamwidgets-poll-content" style="display: none;">
+          <h3 class="jamwidgets-poll-question"></h3>
+          <div class="jamwidgets-poll-options"></div>
+          <div class="jamwidgets-poll-footer">
+            <span class="jamwidgets-poll-total"></span>
+            <span class="jamwidgets-poll-status"></span>
           </div>
-          <button type="button" class="seriph-poll-submit" style="display: none;">Vote</button>
+          <button type="button" class="jamwidgets-poll-submit" style="display: none;">Vote</button>
         </div>
-        <div class="seriph-poll-error" style="display: none;"></div>
+        <div class="jamwidgets-poll-error" style="display: none;"></div>
       `;
 
       // Initialize poll
@@ -121,18 +121,18 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
     ) {
       const visitorId = getVisitorId();
       const headers = {
-        "X-Seriph-Key": config.siteKey,
-        "X-Seriph-Visitor": visitorId,
+        "X-JamWidgets-Key": config.siteKey,
+        "X-JamWidgets-Visitor": visitorId,
       };
 
-      const loadingEl = container.querySelector(".seriph-poll-loading") as HTMLElement;
-      const contentEl = container.querySelector(".seriph-poll-content") as HTMLElement;
-      const errorEl = container.querySelector(".seriph-poll-error") as HTMLElement;
-      const questionEl = container.querySelector(".seriph-poll-question") as HTMLElement;
-      const optionsEl = container.querySelector(".seriph-poll-options") as HTMLElement;
-      const totalEl = container.querySelector(".seriph-poll-total") as HTMLElement;
-      const statusEl = container.querySelector(".seriph-poll-status") as HTMLElement;
-      const submitBtn = container.querySelector(".seriph-poll-submit") as HTMLButtonElement;
+      const loadingEl = container.querySelector(".jamwidgets-poll-loading") as HTMLElement;
+      const contentEl = container.querySelector(".jamwidgets-poll-content") as HTMLElement;
+      const errorEl = container.querySelector(".jamwidgets-poll-error") as HTMLElement;
+      const questionEl = container.querySelector(".jamwidgets-poll-question") as HTMLElement;
+      const optionsEl = container.querySelector(".jamwidgets-poll-options") as HTMLElement;
+      const totalEl = container.querySelector(".jamwidgets-poll-total") as HTMLElement;
+      const statusEl = container.querySelector(".jamwidgets-poll-status") as HTMLElement;
+      const submitBtn = container.querySelector(".jamwidgets-poll-submit") as HTMLButtonElement;
 
       let poll: PollWithResults | null = null;
       let selectedOptions: Set<string> = new Set();
@@ -173,7 +173,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
         optionsEl.innerHTML = "";
         poll.options.forEach((option) => {
           const optionEl = document.createElement("div");
-          optionEl.className = "seriph-poll-option";
+          optionEl.className = "jamwidgets-poll-option";
 
           const votes = poll!.results[option.id] || 0;
           const percent = poll!.totalVotes > 0 ? Math.round((votes / poll!.totalVotes) * 100) : 0;
@@ -183,9 +183,9 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
             // Interactive option
             const inputType = poll!.settings.multiSelect ? "checkbox" : "radio";
             optionEl.innerHTML = `
-              <label class="seriph-poll-label ${isSelected ? "seriph-selected" : ""}">
+              <label class="jamwidgets-poll-label ${isSelected ? "jamwidgets-selected" : ""}">
                 <input type="${inputType}" name="poll-${poll!.id}" value="${option.id}" ${isSelected ? "checked" : ""} />
-                <span class="seriph-poll-text">${option.text}</span>
+                <span class="jamwidgets-poll-text">${option.text}</span>
               </label>
             `;
             const input = optionEl.querySelector("input")!;
@@ -201,25 +201,25 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
               }
               updateSubmitButton();
               // Update visual selection
-              optionsEl.querySelectorAll(".seriph-poll-label").forEach((label) => {
+              optionsEl.querySelectorAll(".jamwidgets-poll-label").forEach((label) => {
                 const labelInput = label.querySelector("input") as HTMLInputElement;
-                label.classList.toggle("seriph-selected", labelInput.checked);
+                label.classList.toggle("jamwidgets-selected", labelInput.checked);
               });
             });
           } else if (showResults) {
             // Show results
             optionEl.innerHTML = `
-              <div class="seriph-poll-result ${isSelected ? "seriph-voted" : ""}">
-                <div class="seriph-poll-bar" style="width: ${percent}%"></div>
-                <span class="seriph-poll-text">${option.text}</span>
-                <span class="seriph-poll-percent">${percent}%</span>
+              <div class="jamwidgets-poll-result ${isSelected ? "jamwidgets-voted" : ""}">
+                <div class="jamwidgets-poll-bar" style="width: ${percent}%"></div>
+                <span class="jamwidgets-poll-text">${option.text}</span>
+                <span class="jamwidgets-poll-percent">${percent}%</span>
               </div>
             `;
           } else {
             // Show without results (voted but results hidden)
             optionEl.innerHTML = `
-              <div class="seriph-poll-result seriph-no-results ${isSelected ? "seriph-voted" : ""}">
-                <span class="seriph-poll-text">${option.text}</span>
+              <div class="jamwidgets-poll-result jamwidgets-no-results ${isSelected ? "jamwidgets-voted" : ""}">
+                <span class="jamwidgets-poll-text">${option.text}</span>
               </div>
             `;
           }
@@ -288,7 +288,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
           }
 
           container.dispatchEvent(
-            new CustomEvent("seriph:poll-voted", {
+            new CustomEvent("jamwidgets:poll-voted", {
               detail: { pollSlug: config.slug, selectedOptions: Array.from(selectedOptions), results: result },
             }),
           );
@@ -310,116 +310,116 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
     }
   }
 
-  customElements.define("seriph-embed", SeriphEmbed);
+  customElements.define("jamwidgets-embed", JamWidgetsEmbed);
 </script>
 
 <style is:global>
-  @layer seriph {
-    .seriph-poll {
-      --seriph-border-color: #e5e7eb;
-      --seriph-bg-color: white;
-      --seriph-text-color: inherit;
-      --seriph-text-muted: #6b7280;
-      --seriph-hover-bg: #f3f4f6;
-      --seriph-selected-bg: #dbeafe;
-      --seriph-selected-border: #3b82f6;
-      --seriph-bar-bg: #dbeafe;
-      --seriph-voted-bar-bg: #3b82f6;
-      --seriph-button-bg: #3b82f6;
-      --seriph-button-text: white;
-      --seriph-button-hover: #2563eb;
+  @layer jamwidgets {
+    .jamwidgets-poll {
+      --jamwidgets-border-color: #e5e7eb;
+      --jamwidgets-bg-color: white;
+      --jamwidgets-text-color: inherit;
+      --jamwidgets-text-muted: #6b7280;
+      --jamwidgets-hover-bg: #f3f4f6;
+      --jamwidgets-selected-bg: #dbeafe;
+      --jamwidgets-selected-border: #3b82f6;
+      --jamwidgets-bar-bg: #dbeafe;
+      --jamwidgets-voted-bar-bg: #3b82f6;
+      --jamwidgets-button-bg: #3b82f6;
+      --jamwidgets-button-text: white;
+      --jamwidgets-button-hover: #2563eb;
 
       font-family: inherit;
     }
 
     /* Dark theme */
-    .seriph-poll.seriph-theme-dark {
-      --seriph-border-color: #374151;
-      --seriph-bg-color: transparent;
-      --seriph-text-color: #f3f4f6;
-      --seriph-text-muted: #9ca3af;
-      --seriph-hover-bg: #374151;
-      --seriph-selected-bg: rgba(59, 130, 246, 0.2);
-      --seriph-selected-border: #3b82f6;
-      --seriph-bar-bg: rgba(59, 130, 246, 0.2);
-      --seriph-voted-bar-bg: #3b82f6;
+    .jamwidgets-poll.jamwidgets-theme-dark {
+      --jamwidgets-border-color: #374151;
+      --jamwidgets-bg-color: transparent;
+      --jamwidgets-text-color: #f3f4f6;
+      --jamwidgets-text-muted: #9ca3af;
+      --jamwidgets-hover-bg: #374151;
+      --jamwidgets-selected-bg: rgba(59, 130, 246, 0.2);
+      --jamwidgets-selected-border: #3b82f6;
+      --jamwidgets-bar-bg: rgba(59, 130, 246, 0.2);
+      --jamwidgets-voted-bar-bg: #3b82f6;
     }
 
     /* Auto theme */
     @media (prefers-color-scheme: dark) {
-      .seriph-poll.seriph-theme-auto {
-        --seriph-border-color: #374151;
-        --seriph-bg-color: transparent;
-        --seriph-text-color: #f3f4f6;
-        --seriph-text-muted: #9ca3af;
-        --seriph-hover-bg: #374151;
-        --seriph-selected-bg: rgba(59, 130, 246, 0.2);
-        --seriph-selected-border: #3b82f6;
-        --seriph-bar-bg: rgba(59, 130, 246, 0.2);
-        --seriph-voted-bar-bg: #3b82f6;
+      .jamwidgets-poll.jamwidgets-theme-auto {
+        --jamwidgets-border-color: #374151;
+        --jamwidgets-bg-color: transparent;
+        --jamwidgets-text-color: #f3f4f6;
+        --jamwidgets-text-muted: #9ca3af;
+        --jamwidgets-hover-bg: #374151;
+        --jamwidgets-selected-bg: rgba(59, 130, 246, 0.2);
+        --jamwidgets-selected-border: #3b82f6;
+        --jamwidgets-bar-bg: rgba(59, 130, 246, 0.2);
+        --jamwidgets-voted-bar-bg: #3b82f6;
       }
     }
 
-    .seriph-poll-loading {
+    .jamwidgets-poll-loading {
       display: flex;
       justify-content: center;
       padding: 2rem;
     }
 
-    .seriph-poll-spinner {
+    .jamwidgets-poll-spinner {
       width: 1.5rem;
       height: 1.5rem;
-      border: 2px solid var(--seriph-border-color);
-      border-top-color: var(--seriph-button-bg);
+      border: 2px solid var(--jamwidgets-border-color);
+      border-top-color: var(--jamwidgets-button-bg);
       border-radius: 50%;
-      animation: seriph-spin 0.8s linear infinite;
+      animation: jamwidgets-spin 0.8s linear infinite;
     }
 
-    @keyframes seriph-spin {
+    @keyframes jamwidgets-spin {
       to { transform: rotate(360deg); }
     }
 
-    .seriph-poll-question {
+    .jamwidgets-poll-question {
       font-weight: 600;
       font-size: 1.125rem;
       margin: 0 0 1rem;
-      color: var(--seriph-text-color);
+      color: var(--jamwidgets-text-color);
     }
 
-    .seriph-poll-options {
+    .jamwidgets-poll-options {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
     }
 
-    .seriph-poll-label {
+    .jamwidgets-poll-label {
       display: flex;
       align-items: center;
       gap: 0.75rem;
       padding: 0.75rem 1rem;
-      border: 1px solid var(--seriph-border-color);
+      border: 1px solid var(--jamwidgets-border-color);
       border-radius: 0.5rem;
       cursor: pointer;
       transition: all 0.15s;
     }
 
-    .seriph-poll-label:hover {
-      background: var(--seriph-hover-bg);
+    .jamwidgets-poll-label:hover {
+      background: var(--jamwidgets-hover-bg);
     }
 
-    .seriph-poll-label.seriph-selected {
-      background: var(--seriph-selected-bg);
-      border-color: var(--seriph-selected-border);
+    .jamwidgets-poll-label.jamwidgets-selected {
+      background: var(--jamwidgets-selected-bg);
+      border-color: var(--jamwidgets-selected-border);
     }
 
-    .seriph-poll-label input {
+    .jamwidgets-poll-label input {
       margin: 0;
     }
 
-    .seriph-poll-result {
+    .jamwidgets-poll-result {
       position: relative;
       padding: 0.75rem 1rem;
-      border: 1px solid var(--seriph-border-color);
+      border: 1px solid var(--jamwidgets-border-color);
       border-radius: 0.5rem;
       overflow: hidden;
       display: flex;
@@ -427,52 +427,52 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       align-items: center;
     }
 
-    .seriph-poll-result.seriph-voted {
-      border-color: var(--seriph-selected-border);
+    .jamwidgets-poll-result.jamwidgets-voted {
+      border-color: var(--jamwidgets-selected-border);
     }
 
-    .seriph-poll-bar {
+    .jamwidgets-poll-bar {
       position: absolute;
       top: 0;
       left: 0;
       bottom: 0;
-      background: var(--seriph-bar-bg);
+      background: var(--jamwidgets-bar-bg);
       transition: width 0.3s ease;
     }
 
-    .seriph-poll-result.seriph-voted .seriph-poll-bar {
-      background: var(--seriph-voted-bar-bg);
+    .jamwidgets-poll-result.jamwidgets-voted .jamwidgets-poll-bar {
+      background: var(--jamwidgets-voted-bar-bg);
       opacity: 0.2;
     }
 
-    .seriph-poll-text {
+    .jamwidgets-poll-text {
       position: relative;
       z-index: 1;
     }
 
-    .seriph-poll-percent {
+    .jamwidgets-poll-percent {
       position: relative;
       z-index: 1;
       font-weight: 500;
       font-size: 0.875rem;
-      color: var(--seriph-text-muted);
+      color: var(--jamwidgets-text-muted);
     }
 
-    .seriph-poll-footer {
+    .jamwidgets-poll-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-top: 0.75rem;
       font-size: 0.875rem;
-      color: var(--seriph-text-muted);
+      color: var(--jamwidgets-text-muted);
     }
 
-    .seriph-poll-submit {
+    .jamwidgets-poll-submit {
       margin-top: 1rem;
       width: 100%;
       padding: 0.625rem 1rem;
-      background: var(--seriph-button-bg);
-      color: var(--seriph-button-text);
+      background: var(--jamwidgets-button-bg);
+      color: var(--jamwidgets-button-text);
       border: none;
       border-radius: 0.5rem;
       font-weight: 500;
@@ -480,16 +480,16 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       transition: background 0.15s;
     }
 
-    .seriph-poll-submit:hover:not(:disabled) {
-      background: var(--seriph-button-hover);
+    .jamwidgets-poll-submit:hover:not(:disabled) {
+      background: var(--jamwidgets-button-hover);
     }
 
-    .seriph-poll-submit:disabled {
+    .jamwidgets-poll-submit:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
 
-    .seriph-poll-error {
+    .jamwidgets-poll-error {
       padding: 0.75rem;
       background: #fef2f2;
       color: #991b1b;
@@ -497,14 +497,14 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       font-size: 0.875rem;
     }
 
-    .seriph-theme-dark .seriph-poll-error,
-    .seriph-theme-auto .seriph-poll-error {
+    .jamwidgets-theme-dark .jamwidgets-poll-error,
+    .jamwidgets-theme-auto .jamwidgets-poll-error {
       background: rgba(239, 68, 68, 0.15);
       color: #fca5a5;
     }
 
     @media (prefers-color-scheme: dark) {
-      .seriph-theme-auto .seriph-poll-error {
+      .jamwidgets-theme-auto .jamwidgets-poll-error {
         background: rgba(239, 68, 68, 0.15);
         color: #fca5a5;
       }

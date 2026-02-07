@@ -1,24 +1,24 @@
 ---
 /**
- * Seriph Announcements Component
+ * JamWidgets Announcements Component
  *
  * Displays site-wide announcements/banners.
  * Supports dismissible announcements with localStorage persistence.
  *
  * @example
- * <Announcements siteKey={import.meta.env.SERIPH_SITE_KEY} />
+ * <Announcements siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} />
  */
 
 interface Props {
   /** Your site key (required) */
   siteKey: string;
-  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** CSS class to add to the container */
   class?: string;
 }
 
-const DEFAULT_ENDPOINT = "https://seriph.xyz";
+const DEFAULT_ENDPOINT = "https://jamwidgets.com";
 const API_PATH = "/api/v1";
 
 const {
@@ -32,8 +32,8 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 ---
 
 <div
-  class:list={["seriph-announcements", className]}
-  data-seriph-announcements
+  class:list={["jamwidgets-announcements", className]}
+  data-jamwidgets-announcements
   data-endpoint={baseUrl}
   data-site-key={siteKey}
 ></div>
@@ -49,7 +49,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
   }
 
   // Get or create a visitor ID for anonymous users
-  const VISITOR_KEY = "seriph_visitor_id";
+  const VISITOR_KEY = "jamwidgets_visitor_id";
   function getVisitorId(): string {
     let id = localStorage.getItem(VISITOR_KEY);
     if (!id) {
@@ -59,7 +59,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
     return id;
   }
 
-  document.querySelectorAll("[data-seriph-announcements]").forEach((container) => {
+  document.querySelectorAll("[data-jamwidgets-announcements]").forEach((container) => {
     const endpoint = (container as HTMLElement).dataset.endpoint;
     const siteKey = (container as HTMLElement).dataset.siteKey;
 
@@ -67,8 +67,8 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
     const visitorId = getVisitorId();
     const headers = {
-      "X-Seriph-Key": siteKey,
-      "X-Seriph-Visitor": visitorId,
+      "X-JamWidgets-Key": siteKey,
+      "X-JamWidgets-Visitor": visitorId,
     };
 
     async function loadAnnouncements() {
@@ -88,18 +88,18 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
       announcements.forEach((announcement) => {
         const el = document.createElement("div");
-        el.className = `seriph-announcement seriph-announcement-${announcement.announcementType}`;
+        el.className = `jamwidgets-announcement jamwidgets-announcement-${announcement.announcementType}`;
         el.dataset.announcementId = announcement.id;
 
-        let content = `<span class="seriph-announcement-content">${announcement.content}</span>`;
+        let content = `<span class="jamwidgets-announcement-content">${announcement.content}</span>`;
 
         if (announcement.linkUrl) {
-          content += ` <a href="${announcement.linkUrl}" class="seriph-announcement-link">${announcement.linkText || "Learn more"}</a>`;
+          content += ` <a href="${announcement.linkUrl}" class="jamwidgets-announcement-link">${announcement.linkText || "Learn more"}</a>`;
         }
 
         if (announcement.isDismissible) {
           content += `
-            <button type="button" class="seriph-announcement-dismiss" aria-label="Dismiss">
+            <button type="button" class="jamwidgets-announcement-dismiss" aria-label="Dismiss">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -111,7 +111,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
         el.innerHTML = content;
 
         // Handle dismiss
-        const dismissBtn = el.querySelector(".seriph-announcement-dismiss");
+        const dismissBtn = el.querySelector(".jamwidgets-announcement-dismiss");
         dismissBtn?.addEventListener("click", async () => {
           try {
             await fetch(`${endpoint}/announcements/${announcement.id}/dismiss`, {
@@ -120,7 +120,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
             });
             el.remove();
             container.dispatchEvent(
-              new CustomEvent("seriph:announcement-dismissed", {
+              new CustomEvent("jamwidgets:announcement-dismissed", {
                 detail: { id: announcement.id },
               }),
             );
@@ -138,14 +138,14 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 </script>
 
 <style is:global>
-  @layer seriph {
-    .seriph-announcements {
+  @layer jamwidgets {
+    .jamwidgets-announcements {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
     }
 
-    .seriph-announcement {
+    .jamwidgets-announcement {
       display: flex;
       align-items: center;
       gap: 0.75rem;
@@ -154,41 +154,41 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       font-size: 0.875rem;
     }
 
-    .seriph-announcement-info {
+    .jamwidgets-announcement-info {
       background: #dbeafe;
       color: #1e40af;
     }
 
-    .seriph-announcement-warning {
+    .jamwidgets-announcement-warning {
       background: #fef3c7;
       color: #92400e;
     }
 
-    .seriph-announcement-success {
+    .jamwidgets-announcement-success {
       background: #dcfce7;
       color: #166534;
     }
 
-    .seriph-announcement-error {
+    .jamwidgets-announcement-error {
       background: #fef2f2;
       color: #991b1b;
     }
 
-    .seriph-announcement-content {
+    .jamwidgets-announcement-content {
       flex: 1;
     }
 
-    .seriph-announcement-link {
+    .jamwidgets-announcement-link {
       font-weight: 500;
       text-decoration: underline;
       text-underline-offset: 2px;
     }
 
-    .seriph-announcement-link:hover {
+    .jamwidgets-announcement-link:hover {
       text-decoration: none;
     }
 
-    .seriph-announcement-dismiss {
+    .jamwidgets-announcement-dismiss {
       padding: 0.25rem;
       background: transparent;
       border: none;
@@ -198,33 +198,33 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       display: flex;
     }
 
-    .seriph-announcement-dismiss:hover {
+    .jamwidgets-announcement-dismiss:hover {
       opacity: 1;
     }
 
-    .seriph-announcement-dismiss svg {
+    .jamwidgets-announcement-dismiss svg {
       width: 1rem;
       height: 1rem;
     }
 
     /* Dark mode adjustments */
     @media (prefers-color-scheme: dark) {
-      .seriph-announcement-info {
+      .jamwidgets-announcement-info {
         background: rgba(59, 130, 246, 0.2);
         color: #93c5fd;
       }
 
-      .seriph-announcement-warning {
+      .jamwidgets-announcement-warning {
         background: rgba(245, 158, 11, 0.2);
         color: #fcd34d;
       }
 
-      .seriph-announcement-success {
+      .jamwidgets-announcement-success {
         background: rgba(34, 197, 94, 0.2);
         color: #86efac;
       }
 
-      .seriph-announcement-error {
+      .jamwidgets-announcement-error {
         background: rgba(239, 68, 68, 0.2);
         color: #fca5a5;
       }

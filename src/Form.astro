@@ -1,12 +1,12 @@
 ---
 /**
- * Seriph Form Component
+ * JamWidgets Form Component
  *
- * A wrapper component that handles form submission to Seriph.
+ * A wrapper component that handles form submission to JamWidgets.
  * You provide your own form fields via the default slot.
  *
  * @example
- * <Form siteKey={import.meta.env.SERIPH_SITE_KEY} formSlug="contact">
+ * <Form siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} formSlug="contact">
  *   <input name="name" placeholder="Name" required />
  *   <input name="email" type="email" placeholder="Email" required />
  *   <textarea name="message" placeholder="Message" required></textarea>
@@ -17,9 +17,9 @@
 interface Props {
   /** Your site key (required) */
   siteKey: string;
-  /** The form slug as configured in Seriph (required) */
+  /** The form slug as configured in JamWidgets (required) */
   formSlug: string;
-  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
   theme?: "light" | "dark" | "auto";
@@ -27,7 +27,7 @@ interface Props {
   class?: string;
 }
 
-const DEFAULT_ENDPOINT = "https://seriph.xyz";
+const DEFAULT_ENDPOINT = "https://jamwidgets.com";
 const API_PATH = "/api/v1";
 
 const {
@@ -43,8 +43,8 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 ---
 
 <form
-  class:list={["seriph-form", `seriph-theme-${theme}`, className]}
-  data-seriph-form
+  class:list={["jamwidgets-form", `jamwidgets-theme-${theme}`, className]}
+  data-jamwidgets-form
   data-endpoint={baseUrl}
   data-site-key={siteKey}
   data-form-slug={formSlug}
@@ -57,7 +57,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
   </div>
 
   <!-- Success/Error message container (hidden by default) -->
-  <div class="seriph-form-message" style="display: none;" aria-live="polite"></div>
+  <div class="jamwidgets-form-message" style="display: none;" aria-live="polite"></div>
 </form>
 
 <script>
@@ -67,7 +67,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
   }
 
   // Get or create a visitor ID for anonymous users
-  const VISITOR_KEY = "seriph_visitor_id";
+  const VISITOR_KEY = "jamwidgets_visitor_id";
   function getVisitorId(): string {
     let id = localStorage.getItem(VISITOR_KEY);
     if (!id) {
@@ -80,7 +80,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
   // Store form load timestamps for spam detection
   const formTimestamps = new WeakMap<Element, number>();
 
-  document.querySelectorAll("[data-seriph-form]").forEach((form) => {
+  document.querySelectorAll("[data-jamwidgets-form]").forEach((form) => {
     // Record when form was loaded (for time-based spam detection)
     formTimestamps.set(form, Math.floor(Date.now() / 1000));
 
@@ -91,7 +91,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       const endpoint = formEl.dataset.endpoint;
       const siteKey = formEl.dataset.siteKey;
       const formSlug = formEl.dataset.formSlug;
-      const messageEl = formEl.querySelector(".seriph-form-message") as HTMLElement | null;
+      const messageEl = formEl.querySelector(".jamwidgets-form-message") as HTMLElement | null;
       const submitBtn = formEl.querySelector('[type="submit"]') as HTMLButtonElement | null;
 
       if (!endpoint || !siteKey || !formSlug) {
@@ -99,9 +99,9 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
         if (!endpoint) missing.push("endpoint");
         if (!formSlug) missing.push("formSlug");
         if (!siteKey) {
-          missing.push("siteKey (check SERIPH_SITE_KEY in your .env)");
+          missing.push("siteKey (check JAMWIDGETS_SITE_KEY in your .env)");
         }
-        console.error(`Seriph form missing required props: ${missing.join(", ")}`);
+        console.error(`JamWidgets form missing required props: ${missing.join(", ")}`);
         return;
       }
 
@@ -115,11 +115,11 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       // Add timestamp for time-based spam detection
       const loadTimestamp = formTimestamps.get(formEl);
       if (loadTimestamp) {
-        data._seriph_ts = loadTimestamp;
+        data._jamwidgets_ts = loadTimestamp;
       }
 
       // Dispatch loading event
-      formEl.dispatchEvent(new CustomEvent("seriph:loading"));
+      formEl.dispatchEvent(new CustomEvent("jamwidgets:loading"));
 
       // Disable submit button
       if (submitBtn) {
@@ -131,8 +131,8 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Seriph-Key": siteKey,
-            "X-Seriph-Visitor": getVisitorId(),
+            "X-JamWidgets-Key": siteKey,
+            "X-JamWidgets-Visitor": getVisitorId(),
           },
           body: JSON.stringify(data),
         });
@@ -148,12 +148,12 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
         if (messageEl) {
           messageEl.textContent = result.message;
           messageEl.style.display = "block";
-          messageEl.className = "seriph-form-message seriph-form-success";
+          messageEl.className = "jamwidgets-form-message jamwidgets-form-success";
         }
 
         // Dispatch success event with response data
         formEl.dispatchEvent(
-          new CustomEvent("seriph:success", {
+          new CustomEvent("jamwidgets:success", {
             detail: result,
           }),
         );
@@ -165,11 +165,11 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
         if (messageEl) {
           messageEl.textContent = error instanceof Error ? error.message : "Something went wrong";
           messageEl.style.display = "block";
-          messageEl.className = "seriph-form-message seriph-form-error";
+          messageEl.className = "jamwidgets-form-message jamwidgets-form-error";
         }
 
         formEl.dispatchEvent(
-          new CustomEvent("seriph:error", {
+          new CustomEvent("jamwidgets:error", {
             detail: error,
           }),
         );
@@ -184,54 +184,54 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 </script>
 
 <style is:global>
-  @layer seriph {
-    .seriph-form {
-      --seriph-success-bg: #dcfce7;
-      --seriph-success-text: #166534;
-      --seriph-success-border: #bbf7d0;
-      --seriph-error-bg: #fef2f2;
-      --seriph-error-text: #991b1b;
-      --seriph-error-border: #fecaca;
+  @layer jamwidgets {
+    .jamwidgets-form {
+      --jamwidgets-success-bg: #dcfce7;
+      --jamwidgets-success-text: #166534;
+      --jamwidgets-success-border: #bbf7d0;
+      --jamwidgets-error-bg: #fef2f2;
+      --jamwidgets-error-text: #991b1b;
+      --jamwidgets-error-border: #fecaca;
     }
 
     /* Dark theme */
-    .seriph-form.seriph-theme-dark {
-      --seriph-success-bg: rgba(34, 197, 94, 0.15);
-      --seriph-success-text: #86efac;
-      --seriph-success-border: rgba(34, 197, 94, 0.3);
-      --seriph-error-bg: rgba(239, 68, 68, 0.15);
-      --seriph-error-text: #fca5a5;
-      --seriph-error-border: rgba(239, 68, 68, 0.3);
+    .jamwidgets-form.jamwidgets-theme-dark {
+      --jamwidgets-success-bg: rgba(34, 197, 94, 0.15);
+      --jamwidgets-success-text: #86efac;
+      --jamwidgets-success-border: rgba(34, 197, 94, 0.3);
+      --jamwidgets-error-bg: rgba(239, 68, 68, 0.15);
+      --jamwidgets-error-text: #fca5a5;
+      --jamwidgets-error-border: rgba(239, 68, 68, 0.3);
     }
 
     /* Auto theme - follows prefers-color-scheme */
     @media (prefers-color-scheme: dark) {
-      .seriph-form.seriph-theme-auto {
-        --seriph-success-bg: rgba(34, 197, 94, 0.15);
-        --seriph-success-text: #86efac;
-        --seriph-success-border: rgba(34, 197, 94, 0.3);
-        --seriph-error-bg: rgba(239, 68, 68, 0.15);
-        --seriph-error-text: #fca5a5;
-        --seriph-error-border: rgba(239, 68, 68, 0.3);
+      .jamwidgets-form.jamwidgets-theme-auto {
+        --jamwidgets-success-bg: rgba(34, 197, 94, 0.15);
+        --jamwidgets-success-text: #86efac;
+        --jamwidgets-success-border: rgba(34, 197, 94, 0.3);
+        --jamwidgets-error-bg: rgba(239, 68, 68, 0.15);
+        --jamwidgets-error-text: #fca5a5;
+        --jamwidgets-error-border: rgba(239, 68, 68, 0.3);
       }
     }
 
-    .seriph-form-message {
+    .jamwidgets-form-message {
       margin-top: 1rem;
       padding: 0.75rem 1rem;
       border-radius: 0.375rem;
     }
 
-    .seriph-form-success {
-      background-color: var(--seriph-success-bg);
-      color: var(--seriph-success-text);
-      border: 1px solid var(--seriph-success-border);
+    .jamwidgets-form-success {
+      background-color: var(--jamwidgets-success-bg);
+      color: var(--jamwidgets-success-text);
+      border: 1px solid var(--jamwidgets-success-border);
     }
 
-    .seriph-form-error {
-      background-color: var(--seriph-error-bg);
-      color: var(--seriph-error-text);
-      border: 1px solid var(--seriph-error-border);
+    .jamwidgets-form-error {
+      background-color: var(--jamwidgets-error-bg);
+      color: var(--jamwidgets-error-text);
+      border: 1px solid var(--jamwidgets-error-border);
     }
   }
 </style>

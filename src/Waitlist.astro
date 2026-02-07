@@ -1,17 +1,17 @@
 ---
 /**
- * Seriph Waitlist Component
+ * JamWidgets Waitlist Component
  *
  * Displays a waitlist signup form for collecting emails before launch.
  *
  * @example
- * <Waitlist siteKey={import.meta.env.SERIPH_SITE_KEY} />
+ * <Waitlist siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} />
  */
 
 interface Props {
   /** Your site key (required) */
   siteKey: string;
-  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
   theme?: "light" | "dark" | "auto";
@@ -25,7 +25,7 @@ interface Props {
   class?: string;
 }
 
-const DEFAULT_ENDPOINT = "https://seriph.xyz";
+const DEFAULT_ENDPOINT = "https://jamwidgets.com";
 const API_PATH = "/api/v1";
 
 const {
@@ -43,30 +43,30 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 ---
 
 <div
-  class:list={["seriph-waitlist", `seriph-theme-${theme}`, className]}
-  data-seriph-waitlist
+  class:list={["jamwidgets-waitlist", `jamwidgets-theme-${theme}`, className]}
+  data-jamwidgets-waitlist
   data-endpoint={baseUrl}
   data-site-key={siteKey}
   data-success-message={successMessage}
 >
-  <form class="seriph-waitlist-form">
+  <form class="jamwidgets-waitlist-form">
     <input
       type="email"
       name="email"
-      class="seriph-waitlist-input"
+      class="jamwidgets-waitlist-input"
       placeholder={placeholder}
       required
     />
-    <button type="submit" class="seriph-waitlist-submit">
+    <button type="submit" class="jamwidgets-waitlist-submit">
       {buttonText}
     </button>
   </form>
-  <div class="seriph-waitlist-message" style="display: none;"></div>
+  <div class="jamwidgets-waitlist-message" style="display: none;"></div>
 </div>
 
 <script>
   // Get or create a visitor ID for anonymous users
-  const VISITOR_KEY = "seriph_visitor_id";
+  const VISITOR_KEY = "jamwidgets_visitor_id";
   function getVisitorId(): string {
     let id = localStorage.getItem(VISITOR_KEY);
     if (!id) {
@@ -76,7 +76,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
     return id;
   }
 
-  document.querySelectorAll("[data-seriph-waitlist]").forEach((container) => {
+  document.querySelectorAll("[data-jamwidgets-waitlist]").forEach((container) => {
     const endpoint = (container as HTMLElement).dataset.endpoint;
     const siteKey = (container as HTMLElement).dataset.siteKey;
     const successMessage = (container as HTMLElement).dataset.successMessage || "You're on the list!";
@@ -85,15 +85,15 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
     const visitorId = getVisitorId();
     const headers = {
-      "X-Seriph-Key": siteKey,
-      "X-Seriph-Visitor": visitorId,
+      "X-JamWidgets-Key": siteKey,
+      "X-JamWidgets-Visitor": visitorId,
       "Content-Type": "application/json",
     };
 
-    const form = container.querySelector(".seriph-waitlist-form") as HTMLFormElement;
-    const input = container.querySelector(".seriph-waitlist-input") as HTMLInputElement;
-    const submitBtn = container.querySelector(".seriph-waitlist-submit") as HTMLButtonElement;
-    const messageEl = container.querySelector(".seriph-waitlist-message") as HTMLElement;
+    const form = container.querySelector(".jamwidgets-waitlist-form") as HTMLFormElement;
+    const input = container.querySelector(".jamwidgets-waitlist-input") as HTMLInputElement;
+    const submitBtn = container.querySelector(".jamwidgets-waitlist-submit") as HTMLButtonElement;
+    const messageEl = container.querySelector(".jamwidgets-waitlist-message") as HTMLElement;
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -121,18 +121,18 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
         // Hide form and show success
         form.style.display = "none";
         messageEl.textContent = successMessage;
-        messageEl.className = "seriph-waitlist-message seriph-success";
+        messageEl.className = "jamwidgets-waitlist-message jamwidgets-success";
         messageEl.style.display = "block";
 
         container.dispatchEvent(
-          new CustomEvent("seriph:waitlist-joined", {
+          new CustomEvent("jamwidgets:waitlist-joined", {
             detail: { email },
           }),
         );
       } catch (e) {
         console.error("Failed to join waitlist:", e);
         messageEl.textContent = e instanceof Error ? e.message : "Failed to join waitlist";
-        messageEl.className = "seriph-waitlist-message seriph-error";
+        messageEl.className = "jamwidgets-waitlist-message jamwidgets-error";
         messageEl.style.display = "block";
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
@@ -146,76 +146,76 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 </script>
 
 <style is:global>
-  .seriph-waitlist {
-    --seriph-border-color: #9ca3af;
-    --seriph-bg-color: white;
-    --seriph-text-color: inherit;
-    --seriph-text-muted: #6b7280;
-    --seriph-button-bg: #3b82f6;
-    --seriph-button-text: white;
-    --seriph-button-hover: #2563eb;
-    --seriph-success-color: #16a34a;
-    --seriph-success-bg: #dcfce7;
-    --seriph-error-color: #dc2626;
-    --seriph-error-bg: #fef2f2;
+  .jamwidgets-waitlist {
+    --jamwidgets-border-color: #9ca3af;
+    --jamwidgets-bg-color: white;
+    --jamwidgets-text-color: inherit;
+    --jamwidgets-text-muted: #6b7280;
+    --jamwidgets-button-bg: #3b82f6;
+    --jamwidgets-button-text: white;
+    --jamwidgets-button-hover: #2563eb;
+    --jamwidgets-success-color: #16a34a;
+    --jamwidgets-success-bg: #dcfce7;
+    --jamwidgets-error-color: #dc2626;
+    --jamwidgets-error-bg: #fef2f2;
     font-family: inherit;
   }
 
-  .seriph-waitlist.seriph-theme-dark {
-    --seriph-border-color: #9ca3af;
-    --seriph-bg-color: #374151;
-    --seriph-text-color: #f3f4f6;
-    --seriph-text-muted: #9ca3af;
-    --seriph-success-color: #22c55e;
-    --seriph-success-bg: rgba(34, 197, 94, 0.15);
-    --seriph-error-color: #ef4444;
-    --seriph-error-bg: rgba(239, 68, 68, 0.15);
+  .jamwidgets-waitlist.jamwidgets-theme-dark {
+    --jamwidgets-border-color: #9ca3af;
+    --jamwidgets-bg-color: #374151;
+    --jamwidgets-text-color: #f3f4f6;
+    --jamwidgets-text-muted: #9ca3af;
+    --jamwidgets-success-color: #22c55e;
+    --jamwidgets-success-bg: rgba(34, 197, 94, 0.15);
+    --jamwidgets-error-color: #ef4444;
+    --jamwidgets-error-bg: rgba(239, 68, 68, 0.15);
   }
 
   @media (prefers-color-scheme: dark) {
-    .seriph-waitlist.seriph-theme-auto {
-      --seriph-border-color: #9ca3af;
-      --seriph-bg-color: #374151;
-      --seriph-text-color: #f3f4f6;
-      --seriph-text-muted: #9ca3af;
-      --seriph-success-color: #22c55e;
-      --seriph-success-bg: rgba(34, 197, 94, 0.15);
-      --seriph-error-color: #ef4444;
-      --seriph-error-bg: rgba(239, 68, 68, 0.15);
+    .jamwidgets-waitlist.jamwidgets-theme-auto {
+      --jamwidgets-border-color: #9ca3af;
+      --jamwidgets-bg-color: #374151;
+      --jamwidgets-text-color: #f3f4f6;
+      --jamwidgets-text-muted: #9ca3af;
+      --jamwidgets-success-color: #22c55e;
+      --jamwidgets-success-bg: rgba(34, 197, 94, 0.15);
+      --jamwidgets-error-color: #ef4444;
+      --jamwidgets-error-bg: rgba(239, 68, 68, 0.15);
     }
   }
 
-  .seriph-waitlist-form {
+  .jamwidgets-waitlist-form {
     display: flex;
     gap: 0.5rem;
   }
 
-  .seriph-waitlist .seriph-waitlist-input {
+  .jamwidgets-waitlist .jamwidgets-waitlist-input {
     flex: 1;
     padding: 0.625rem 0.875rem;
     font-size: 0.875rem;
-    border: 1px solid var(--seriph-border-color);
+    border: 1px solid var(--jamwidgets-border-color);
     border-radius: 0.5rem;
-    background: var(--seriph-bg-color);
-    color: var(--seriph-text-color);
+    background: var(--jamwidgets-bg-color);
+    color: var(--jamwidgets-text-color);
     font-family: inherit;
     min-width: 0;
   }
 
-  .seriph-waitlist .seriph-waitlist-input:focus {
+  .jamwidgets-waitlist .jamwidgets-waitlist-input:focus {
     outline: none;
-    border-color: var(--seriph-button-bg);
+    border-color: var(--jamwidgets-button-bg);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
   }
 
-  .seriph-waitlist .seriph-waitlist-input::placeholder {
-    color: var(--seriph-text-muted);
+  .jamwidgets-waitlist .jamwidgets-waitlist-input::placeholder {
+    color: var(--jamwidgets-text-muted);
   }
 
-  .seriph-waitlist .seriph-waitlist-submit {
+  .jamwidgets-waitlist .jamwidgets-waitlist-submit {
     padding: 0.625rem 1rem;
-    background: var(--seriph-button-bg);
-    color: var(--seriph-button-text);
+    background: var(--jamwidgets-button-bg);
+    color: var(--jamwidgets-button-text);
     border: none;
     border-radius: 0.5rem;
     font-size: 0.875rem;
@@ -225,37 +225,37 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
     white-space: nowrap;
   }
 
-  .seriph-waitlist .seriph-waitlist-submit:hover:not(:disabled) {
-    background: var(--seriph-button-hover);
+  .jamwidgets-waitlist .jamwidgets-waitlist-submit:hover:not(:disabled) {
+    background: var(--jamwidgets-button-hover);
   }
 
-  .seriph-waitlist .seriph-waitlist-submit:disabled {
+  .jamwidgets-waitlist .jamwidgets-waitlist-submit:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
 
-  .seriph-waitlist-message {
+  .jamwidgets-waitlist-message {
     padding: 0.75rem 1rem;
     font-size: 0.875rem;
     border-radius: 0.5rem;
     text-align: center;
   }
 
-  .seriph-waitlist-message.seriph-success {
-    background: var(--seriph-success-bg);
-    color: var(--seriph-success-color);
+  .jamwidgets-waitlist-message.jamwidgets-success {
+    background: var(--jamwidgets-success-bg);
+    color: var(--jamwidgets-success-color);
   }
 
-  .seriph-waitlist-message.seriph-error {
-    background: var(--seriph-error-bg);
-    color: var(--seriph-error-color);
+  .jamwidgets-waitlist-message.jamwidgets-error {
+    background: var(--jamwidgets-error-bg);
+    color: var(--jamwidgets-error-color);
   }
 
   @media (max-width: 400px) {
-    .seriph-waitlist-form {
+    .jamwidgets-waitlist-form {
       flex-direction: column;
     }
-    .seriph-waitlist .seriph-waitlist-submit {
+    .jamwidgets-waitlist .jamwidgets-waitlist-submit {
       width: 100%;
     }
   }

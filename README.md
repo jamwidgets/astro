@@ -1,36 +1,36 @@
-# @seriphxyz/astro
+# @jamwidgets/astro
 
 > **Note:** This repo is a read-only mirror. Source lives in a private monorepo.
 > For issues/PRs, please open them here and we'll sync changes back.
 
-Astro components and content loader for [Seriph](https://seriph.xyz) - widgets for static sites.
+Astro components and content loader for [JamWidgets](https://jamwidgets.com) - widgets for static sites.
 
 ## Installation
 
 ```bash
-npm install @seriphxyz/astro
+npm install @jamwidgets/astro
 ```
 
 ## Setup
 
-Add your Seriph site key to your `.env`:
+Add your JamWidgets site key to your `.env`:
 
 ```
-SERIPH_SITE_KEY=your_site_key_here
+JAMWIDGETS_SITE_KEY=your_site_key_here
 ```
 
 ## Content Loader (Posts)
 
-Fetch posts from Seriph at build time using Astro's content collections:
+Fetch posts from JamWidgets at build time using Astro's content collections:
 
 ```ts
 // src/content.config.ts
 import { defineCollection } from "astro:content";
-import { seriphPostsLoader } from "@seriphxyz/astro/loader";
+import { jamwidgetsPostsLoader } from "@jamwidgets/astro/loader";
 
 const posts = defineCollection({
-  loader: seriphPostsLoader({
-    siteKey: import.meta.env.SERIPH_SITE_KEY,
+  loader: jamwidgetsPostsLoader({
+    siteKey: import.meta.env.JAMWIDGETS_SITE_KEY,
   }),
 });
 
@@ -56,9 +56,9 @@ const posts = await getCollection("posts");
 ### Loader Options
 
 ```ts
-seriphPostsLoader({
-  siteKey: string;        // Required - your Seriph site key
-  endpoint?: string;      // Default: 'https://seriph.xyz'
+jamwidgetsPostsLoader({
+  siteKey: string;        // Required - your JamWidgets site key
+  endpoint?: string;      // Default: 'https://jamwidgets.com'
   tag?: string;           // Filter posts by tag
   limit?: number;         // Max posts to fetch (default: 500)
   onError?: 'throw' | 'warn' | 'ignore';  // Error handling
@@ -73,10 +73,10 @@ A wrapper component for contact forms with built-in spam protection:
 
 ```astro
 ---
-import Form from "@seriphxyz/astro/Form";
+import Form from "@jamwidgets/astro/Form";
 ---
 
-<Form siteKey={import.meta.env.SERIPH_SITE_KEY} formSlug="contact">
+<Form siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} formSlug="contact">
   <input name="name" placeholder="Name" required />
   <input name="email" type="email" placeholder="Email" required />
   <textarea name="message" placeholder="Message" required></textarea>
@@ -85,16 +85,16 @@ import Form from "@seriphxyz/astro/Form";
 ```
 
 **Props:**
-- `siteKey` (required) - Your Seriph site key
-- `formSlug` (required) - The form slug as configured in Seriph
-- `endpoint` - Base URL (default: `https://seriph.xyz`)
+- `siteKey` (required) - Your JamWidgets site key
+- `formSlug` (required) - The form slug as configured in JamWidgets
+- `endpoint` - Base URL (default: `https://jamwidgets.com`)
 - `theme` - `'light'` | `'dark'` | `'auto'` (default: `'light'`)
 - `class` - Additional CSS class
 
 **Events:**
-- `seriph:loading` - Form submission started
-- `seriph:success` - Submission successful (detail contains response)
-- `seriph:error` - Submission failed (detail contains error)
+- `jamwidgets:loading` - Form submission started
+- `jamwidgets:success` - Submission successful (detail contains response)
+- `jamwidgets:error` - Submission failed (detail contains error)
 
 ### Comments
 
@@ -102,24 +102,24 @@ Threaded comments with a submission form:
 
 ```astro
 ---
-import Comments from "@seriphxyz/astro/Comments";
+import Comments from "@jamwidgets/astro/Comments";
 ---
 
 <Comments
-  siteKey={import.meta.env.SERIPH_SITE_KEY}
+  siteKey={import.meta.env.JAMWIDGETS_SITE_KEY}
   pageId={Astro.url.pathname}
 />
 ```
 
 **Props:**
-- `siteKey` (required) - Your Seriph site key
+- `siteKey` (required) - Your JamWidgets site key
 - `pageId` (required) - Unique page identifier (e.g., URL path)
-- `endpoint` - Base URL (default: `https://seriph.xyz`)
+- `endpoint` - Base URL (default: `https://jamwidgets.com`)
 - `theme` - `'light'` | `'dark'` | `'auto'` (default: `'light'`)
 - `class` - Additional CSS class
 
 **Events:**
-- `seriph:comment-posted` - Comment submitted (detail contains comment)
+- `jamwidgets:comment-posted` - Comment submitted (detail contains comment)
 
 ### Reactions
 
@@ -127,30 +127,30 @@ Reaction buttons (like, love, clap, etc.):
 
 ```astro
 ---
-import Reactions from "@seriphxyz/astro/Reactions";
+import Reactions from "@jamwidgets/astro/Reactions";
 ---
 
 <Reactions
-  siteKey={import.meta.env.SERIPH_SITE_KEY}
+  siteKey={import.meta.env.JAMWIDGETS_SITE_KEY}
   pageId={Astro.url.pathname}
   reactions={["like", "love", "clap"]}
 />
 ```
 
 **Props:**
-- `siteKey` (required) - Your Seriph site key
+- `siteKey` (required) - Your JamWidgets site key
 - `pageId` (required) - Unique page identifier
 - `reactions` - Array of reaction types (default: `['like']`)
 - `icons` - Custom icons: `{ like: '👍', love: '❤️' }`
-- `endpoint` - Base URL (default: `https://seriph.xyz`)
+- `endpoint` - Base URL (default: `https://jamwidgets.com`)
 - `theme` - `'light'` | `'dark'` | `'auto'` (default: `'light'`)
 - `class` - Additional CSS class
 
 **Built-in icons:** `like`, `love`, `clap`, `fire`, `think`, `sad`, `laugh`
 
 **Events:**
-- `seriph:reaction-added` - Reaction added
-- `seriph:reaction-removed` - Reaction removed
+- `jamwidgets:reaction-added` - Reaction added
+- `jamwidgets:reaction-removed` - Reaction removed
 
 ### Subscribe
 
@@ -158,19 +158,19 @@ Email subscription form with double opt-in:
 
 ```astro
 ---
-import Subscribe from "@seriphxyz/astro/Subscribe";
+import Subscribe from "@jamwidgets/astro/Subscribe";
 ---
 
 <Subscribe
-  siteKey={import.meta.env.SERIPH_SITE_KEY}
+  siteKey={import.meta.env.JAMWIDGETS_SITE_KEY}
   buttonText="Subscribe"
   placeholder="your@email.com"
 />
 ```
 
 **Props:**
-- `siteKey` (required) - Your Seriph site key
-- `endpoint` - Base URL (default: `https://seriph.xyz`)
+- `siteKey` (required) - Your JamWidgets site key
+- `endpoint` - Base URL (default: `https://jamwidgets.com`)
 - `buttonText` - Submit button text (default: `'Subscribe'`)
 - `placeholder` - Email input placeholder
 - `successMessage` - Custom success message
@@ -178,7 +178,7 @@ import Subscribe from "@seriphxyz/astro/Subscribe";
 - `class` - Additional CSS class
 
 **Events:**
-- `seriph:subscribed` - Subscription successful
+- `jamwidgets:subscribed` - Subscription successful
 
 ### SubscribeForm
 
@@ -186,10 +186,10 @@ A more flexible subscription form that wraps your own markup:
 
 ```astro
 ---
-import SubscribeForm from "@seriphxyz/astro/SubscribeForm";
+import SubscribeForm from "@jamwidgets/astro/SubscribeForm";
 ---
 
-<SubscribeForm siteKey={import.meta.env.SERIPH_SITE_KEY}>
+<SubscribeForm siteKey={import.meta.env.JAMWIDGETS_SITE_KEY}>
   <input name="email" type="email" placeholder="Email" required />
   <button type="submit">Join newsletter</button>
 </SubscribeForm>
@@ -208,7 +208,7 @@ import {
   addReaction,
   fetchPosts,
   fetchPost,
-} from "@seriphxyz/astro";
+} from "@jamwidgets/astro";
 
 // Submit a form
 await submitForm({
@@ -236,11 +236,11 @@ await addReaction({
 Components use CSS custom properties for theming. Override them to match your site:
 
 ```css
-.seriph-comments {
-  --seriph-border-color: #e5e7eb;
-  --seriph-bg-color: #f9fafb;
-  --seriph-text-color: inherit;
-  --seriph-button-bg: #3b82f6;
+.jamwidgets-comments {
+  --jamwidgets-border-color: #e5e7eb;
+  --jamwidgets-bg-color: #f9fafb;
+  --jamwidgets-text-color: inherit;
+  --jamwidgets-button-bg: #3b82f6;
   /* ... see component source for all variables */
 }
 ```

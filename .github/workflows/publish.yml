@@ -22,9 +22,9 @@ jobs:
 
       - name: Replace workspace dependency with npm version
         run: |
-          CORE_VERSION=$(npm view @seriphxyz/core version)
-          echo "Using @seriphxyz/core@$CORE_VERSION"
-          sed -i "s|\"@seriphxyz/core\": \"workspace:\*\"|\"@seriphxyz/core\": \"^$CORE_VERSION\"|g" package.json
+          CORE_VERSION=$(npm view @jamwidgets/core version)
+          echo "Using @jamwidgets/core@$CORE_VERSION"
+          sed -i "s|\"@jamwidgets/core\": \"workspace:\*\"|\"@jamwidgets/core\": \"^$CORE_VERSION\"|g" package.json
 
       - run: npm install
       - run: npm run build

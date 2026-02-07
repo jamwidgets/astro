@@ -1,18 +1,18 @@
 ---
 /**
- * Seriph Feedback Component
+ * JamWidgets Feedback Component
  *
  * Displays a feedback form for collecting user suggestions.
  * Supports different feedback types (bug, feature, improvement, other).
  *
  * @example
- * <Feedback siteKey={import.meta.env.SERIPH_SITE_KEY} />
+ * <Feedback siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} />
  */
 
 interface Props {
   /** Your site key (required) */
   siteKey: string;
-  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
   theme?: "light" | "dark" | "auto";
@@ -24,7 +24,7 @@ interface Props {
   class?: string;
 }
 
-const DEFAULT_ENDPOINT = "https://seriph.xyz";
+const DEFAULT_ENDPOINT = "https://jamwidgets.com";
 const API_PATH = "/api/v1";
 
 const {
@@ -41,27 +41,27 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 ---
 
 <div
-  class:list={["seriph-feedback", `seriph-theme-${theme}`, className]}
-  data-seriph-feedback
+  class:list={["jamwidgets-feedback", `jamwidgets-theme-${theme}`, className]}
+  data-jamwidgets-feedback
   data-endpoint={baseUrl}
   data-site-key={siteKey}
 >
-  <form class="seriph-feedback-form">
+  <form class="jamwidgets-feedback-form">
     {showTypeSelector && (
-      <div class="seriph-feedback-type-selector">
-        <label class="seriph-feedback-type">
+      <div class="jamwidgets-feedback-type-selector">
+        <label class="jamwidgets-feedback-type">
           <input type="radio" name="feedbackType" value="feature" checked />
           <span>Feature</span>
         </label>
-        <label class="seriph-feedback-type">
+        <label class="jamwidgets-feedback-type">
           <input type="radio" name="feedbackType" value="bug" />
           <span>Bug</span>
         </label>
-        <label class="seriph-feedback-type">
+        <label class="jamwidgets-feedback-type">
           <input type="radio" name="feedbackType" value="improvement" />
           <span>Improvement</span>
         </label>
-        <label class="seriph-feedback-type">
+        <label class="jamwidgets-feedback-type">
           <input type="radio" name="feedbackType" value="other" />
           <span>Other</span>
         </label>
@@ -69,14 +69,14 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
     )}
     <textarea
       name="content"
-      class="seriph-feedback-textarea"
+      class="jamwidgets-feedback-textarea"
       placeholder={placeholder}
       rows="3"
       required
     ></textarea>
-    <div class="seriph-feedback-footer">
-      <span class="seriph-feedback-message"></span>
-      <button type="submit" class="seriph-feedback-submit">
+    <div class="jamwidgets-feedback-footer">
+      <span class="jamwidgets-feedback-message"></span>
+      <button type="submit" class="jamwidgets-feedback-submit">
         Send Feedback
       </button>
     </div>
@@ -85,7 +85,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
 <script>
   // Get or create a visitor ID for anonymous users
-  const VISITOR_KEY = "seriph_visitor_id";
+  const VISITOR_KEY = "jamwidgets_visitor_id";
   function getVisitorId(): string {
     let id = localStorage.getItem(VISITOR_KEY);
     if (!id) {
@@ -95,7 +95,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
     return id;
   }
 
-  document.querySelectorAll("[data-seriph-feedback]").forEach((container) => {
+  document.querySelectorAll("[data-jamwidgets-feedback]").forEach((container) => {
     const endpoint = (container as HTMLElement).dataset.endpoint;
     const siteKey = (container as HTMLElement).dataset.siteKey;
 
@@ -103,15 +103,15 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
     const visitorId = getVisitorId();
     const headers = {
-      "X-Seriph-Key": siteKey,
-      "X-Seriph-Visitor": visitorId,
+      "X-JamWidgets-Key": siteKey,
+      "X-JamWidgets-Visitor": visitorId,
       "Content-Type": "application/json",
     };
 
-    const form = container.querySelector(".seriph-feedback-form") as HTMLFormElement;
-    const textarea = container.querySelector(".seriph-feedback-textarea") as HTMLTextAreaElement;
-    const submitBtn = container.querySelector(".seriph-feedback-submit") as HTMLButtonElement;
-    const messageEl = container.querySelector(".seriph-feedback-message") as HTMLElement;
+    const form = container.querySelector(".jamwidgets-feedback-form") as HTMLFormElement;
+    const textarea = container.querySelector(".jamwidgets-feedback-textarea") as HTMLTextAreaElement;
+    const submitBtn = container.querySelector(".jamwidgets-feedback-submit") as HTMLButtonElement;
+    const messageEl = container.querySelector(".jamwidgets-feedback-message") as HTMLElement;
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -125,7 +125,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       submitBtn.disabled = true;
       submitBtn.textContent = "Sending...";
       messageEl.textContent = "";
-      messageEl.className = "seriph-feedback-message";
+      messageEl.className = "jamwidgets-feedback-message";
 
       try {
         const response = await fetch(`${endpoint}/feedback`, {
@@ -141,22 +141,22 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
         textarea.value = "";
         messageEl.textContent = "Thank you for your feedback!";
-        messageEl.className = "seriph-feedback-message seriph-success";
+        messageEl.className = "jamwidgets-feedback-message jamwidgets-success";
 
         container.dispatchEvent(
-          new CustomEvent("seriph:feedback-submitted", {
+          new CustomEvent("jamwidgets:feedback-submitted", {
             detail: { content, feedbackType },
           }),
         );
 
         setTimeout(() => {
           messageEl.textContent = "";
-          messageEl.className = "seriph-feedback-message";
+          messageEl.className = "jamwidgets-feedback-message";
         }, 3000);
       } catch (e) {
         console.error("Failed to submit feedback:", e);
         messageEl.textContent = e instanceof Error ? e.message : "Failed to submit feedback";
-        messageEl.className = "seriph-feedback-message seriph-error";
+        messageEl.className = "jamwidgets-feedback-message jamwidgets-error";
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = "Send Feedback";
@@ -166,68 +166,68 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 </script>
 
 <style is:global>
-  .seriph-feedback {
-    --seriph-border-color: #9ca3af;
-    --seriph-bg-color: white;
-    --seriph-text-color: inherit;
-    --seriph-text-muted: #6b7280;
-    --seriph-hover-bg: #f3f4f6;
-    --seriph-selected-bg: #dbeafe;
-    --seriph-selected-border: #3b82f6;
-    --seriph-button-bg: #3b82f6;
-    --seriph-button-text: white;
-    --seriph-button-hover: #2563eb;
-    --seriph-success-color: #16a34a;
-    --seriph-error-color: #dc2626;
+  .jamwidgets-feedback {
+    --jamwidgets-border-color: #9ca3af;
+    --jamwidgets-bg-color: white;
+    --jamwidgets-text-color: inherit;
+    --jamwidgets-text-muted: #6b7280;
+    --jamwidgets-hover-bg: #f3f4f6;
+    --jamwidgets-selected-bg: #dbeafe;
+    --jamwidgets-selected-border: #3b82f6;
+    --jamwidgets-button-bg: #3b82f6;
+    --jamwidgets-button-text: white;
+    --jamwidgets-button-hover: #2563eb;
+    --jamwidgets-success-color: #16a34a;
+    --jamwidgets-error-color: #dc2626;
     font-family: inherit;
   }
 
-  .seriph-feedback.seriph-theme-dark {
-    --seriph-border-color: #9ca3af;
-    --seriph-bg-color: #374151;
-    --seriph-text-color: #f3f4f6;
-    --seriph-text-muted: #9ca3af;
-    --seriph-hover-bg: #4b5563;
-    --seriph-selected-bg: rgba(59, 130, 246, 0.3);
-    --seriph-selected-border: #60a5fa;
-    --seriph-success-color: #22c55e;
-    --seriph-error-color: #ef4444;
+  .jamwidgets-feedback.jamwidgets-theme-dark {
+    --jamwidgets-border-color: #9ca3af;
+    --jamwidgets-bg-color: #374151;
+    --jamwidgets-text-color: #f3f4f6;
+    --jamwidgets-text-muted: #9ca3af;
+    --jamwidgets-hover-bg: #4b5563;
+    --jamwidgets-selected-bg: rgba(59, 130, 246, 0.3);
+    --jamwidgets-selected-border: #60a5fa;
+    --jamwidgets-success-color: #22c55e;
+    --jamwidgets-error-color: #ef4444;
   }
 
   @media (prefers-color-scheme: dark) {
-    .seriph-feedback.seriph-theme-auto {
-      --seriph-border-color: #9ca3af;
-      --seriph-bg-color: #374151;
-      --seriph-text-color: #f3f4f6;
-      --seriph-text-muted: #9ca3af;
-      --seriph-hover-bg: #4b5563;
-      --seriph-selected-bg: rgba(59, 130, 246, 0.3);
-      --seriph-selected-border: #60a5fa;
-      --seriph-success-color: #22c55e;
-      --seriph-error-color: #ef4444;
+    .jamwidgets-feedback.jamwidgets-theme-auto {
+      --jamwidgets-border-color: #9ca3af;
+      --jamwidgets-bg-color: #374151;
+      --jamwidgets-text-color: #f3f4f6;
+      --jamwidgets-text-muted: #9ca3af;
+      --jamwidgets-hover-bg: #4b5563;
+      --jamwidgets-selected-bg: rgba(59, 130, 246, 0.3);
+      --jamwidgets-selected-border: #60a5fa;
+      --jamwidgets-success-color: #22c55e;
+      --jamwidgets-error-color: #ef4444;
     }
   }
 
-  .seriph-feedback-form {
+  .jamwidgets-feedback-form {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
   }
 
-  .seriph-feedback-type-selector {
+  .jamwidgets-feedback-type-selector {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
   }
 
-  .seriph-feedback-type {
+  .jamwidgets-feedback-type {
     position: relative;
     display: inline-flex;
     align-items: center;
     cursor: pointer;
   }
 
-  .seriph-feedback-type input {
+  .jamwidgets-feedback-type input {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -239,74 +239,74 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
     border: 0;
   }
 
-  .seriph-feedback-type span {
+  .jamwidgets-feedback-type span {
     display: inline-block;
     padding: 0.375rem 0.75rem;
     font-size: 0.875rem;
-    border: 1px solid var(--seriph-border-color);
+    border: 1px solid var(--jamwidgets-border-color);
     border-radius: 9999px;
     transition: all 0.15s;
-    color: var(--seriph-text-color);
+    color: var(--jamwidgets-text-color);
     background: transparent;
   }
 
-  .seriph-feedback-type:hover span {
-    background: var(--seriph-hover-bg);
+  .jamwidgets-feedback-type:hover span {
+    background: var(--jamwidgets-hover-bg);
   }
 
-  .seriph-feedback-type input:checked + span {
-    background: var(--seriph-selected-bg);
-    border-color: var(--seriph-selected-border);
-    color: var(--seriph-selected-border);
+  .jamwidgets-feedback-type input:checked + span {
+    background: var(--jamwidgets-selected-bg);
+    border-color: var(--jamwidgets-selected-border);
+    color: var(--jamwidgets-selected-border);
   }
 
-  .seriph-feedback .seriph-feedback-textarea {
+  .jamwidgets-feedback .jamwidgets-feedback-textarea {
     width: 100%;
     padding: 0.75rem;
     font-size: 0.875rem;
-    border: 1px solid var(--seriph-border-color);
+    border: 1px solid var(--jamwidgets-border-color);
     border-radius: 0.5rem;
-    background: var(--seriph-bg-color);
-    color: var(--seriph-text-color);
+    background: var(--jamwidgets-bg-color);
+    color: var(--jamwidgets-text-color);
     resize: vertical;
     min-height: 80px;
     font-family: inherit;
   }
 
-  .seriph-feedback .seriph-feedback-textarea:focus {
+  .jamwidgets-feedback .jamwidgets-feedback-textarea:focus {
     outline: none;
-    border-color: var(--seriph-selected-border);
+    border-color: var(--jamwidgets-selected-border);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
   }
 
-  .seriph-feedback .seriph-feedback-textarea::placeholder {
-    color: var(--seriph-text-muted);
+  .jamwidgets-feedback .jamwidgets-feedback-textarea::placeholder {
+    color: var(--jamwidgets-text-muted);
   }
 
-  .seriph-feedback-footer {
+  .jamwidgets-feedback-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
   }
 
-  .seriph-feedback-message {
+  .jamwidgets-feedback-message {
     font-size: 0.875rem;
-    color: var(--seriph-text-muted);
+    color: var(--jamwidgets-text-muted);
   }
 
-  .seriph-feedback-message.seriph-success {
-    color: var(--seriph-success-color);
+  .jamwidgets-feedback-message.jamwidgets-success {
+    color: var(--jamwidgets-success-color);
   }
 
-  .seriph-feedback-message.seriph-error {
-    color: var(--seriph-error-color);
+  .jamwidgets-feedback-message.jamwidgets-error {
+    color: var(--jamwidgets-error-color);
   }
 
-  .seriph-feedback .seriph-feedback-submit {
+  .jamwidgets-feedback .jamwidgets-feedback-submit {
     padding: 0.5rem 1rem;
-    background: var(--seriph-button-bg);
-    color: var(--seriph-button-text);
+    background: var(--jamwidgets-button-bg);
+    color: var(--jamwidgets-button-text);
     border: none;
     border-radius: 0.5rem;
     font-size: 0.875rem;
@@ -316,11 +316,11 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
     white-space: nowrap;
   }
 
-  .seriph-feedback .seriph-feedback-submit:hover:not(:disabled) {
-    background: var(--seriph-button-hover);
+  .jamwidgets-feedback .jamwidgets-feedback-submit:hover:not(:disabled) {
+    background: var(--jamwidgets-button-hover);
   }
 
-  .seriph-feedback .seriph-feedback-submit:disabled {
+  .jamwidgets-feedback .jamwidgets-feedback-submit:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }

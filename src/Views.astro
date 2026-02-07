@@ -1,13 +1,13 @@
 ---
 /**
- * Seriph Views Component
+ * JamWidgets Views Component
  *
  * Tracks page views and displays view count.
  * Automatically records a view when the page loads.
  *
  * @example
  * <Views
- *   siteKey={import.meta.env.SERIPH_SITE_KEY}
+ *   siteKey={import.meta.env.JAMWIDGETS_SITE_KEY}
  *   pageId={Astro.url.pathname}
  * />
  */
@@ -17,7 +17,7 @@ interface Props {
   siteKey: string;
   /** Unique identifier for this page (e.g., slug or URL path) */
   pageId: string;
-  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** Show unique visitor count alongside total views (default: false) */
   showUnique?: boolean;
@@ -27,7 +27,7 @@ interface Props {
   class?: string;
 }
 
-const DEFAULT_ENDPOINT = "https://seriph.xyz";
+const DEFAULT_ENDPOINT = "https://jamwidgets.com";
 const API_PATH = "/api/v1";
 
 const {
@@ -44,26 +44,26 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 ---
 
 <div
-  class:list={["seriph-views", `seriph-theme-${theme}`, className]}
-  data-seriph-views
+  class:list={["jamwidgets-views", `jamwidgets-theme-${theme}`, className]}
+  data-jamwidgets-views
   data-endpoint={baseUrl}
   data-site-key={siteKey}
   data-page-id={pageId}
   data-show-unique={showUnique}
 >
-  <span class="seriph-views-icon">
+  <span class="jamwidgets-views-icon">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
       <circle cx="12" cy="12" r="3"/>
     </svg>
   </span>
-  <span class="seriph-views-count">-</span>
-  <span class="seriph-views-unique" style="display: none;"></span>
+  <span class="jamwidgets-views-count">-</span>
+  <span class="jamwidgets-views-unique" style="display: none;"></span>
 </div>
 
 <script>
   // Get or create a visitor ID for anonymous users
-  const VISITOR_KEY = "seriph_visitor_id";
+  const VISITOR_KEY = "jamwidgets_visitor_id";
   function getVisitorId(): string {
     let id = localStorage.getItem(VISITOR_KEY);
     if (!id) {
@@ -73,7 +73,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
     return id;
   }
 
-  document.querySelectorAll("[data-seriph-views]").forEach((container) => {
+  document.querySelectorAll("[data-jamwidgets-views]").forEach((container) => {
     const endpoint = (container as HTMLElement).dataset.endpoint;
     const siteKey = (container as HTMLElement).dataset.siteKey;
     const pageId = (container as HTMLElement).dataset.pageId;
@@ -83,12 +83,12 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
     const visitorId = getVisitorId();
     const headers = {
-      "X-Seriph-Key": siteKey,
-      "X-Seriph-Visitor": visitorId,
+      "X-JamWidgets-Key": siteKey,
+      "X-JamWidgets-Visitor": visitorId,
     };
 
-    const countEl = container.querySelector(".seriph-views-count");
-    const uniqueEl = container.querySelector(".seriph-views-unique") as HTMLElement;
+    const countEl = container.querySelector(".jamwidgets-views-count");
+    const uniqueEl = container.querySelector(".jamwidgets-views-unique") as HTMLElement;
 
     // Record the view
     async function recordView() {
@@ -114,7 +114,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
         }
 
         container.dispatchEvent(
-          new CustomEvent("seriph:view-recorded", {
+          new CustomEvent("jamwidgets:view-recorded", {
             detail: result,
           }),
         );
@@ -155,48 +155,48 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 </script>
 
 <style is:global>
-  @layer seriph {
-    .seriph-views {
-      --seriph-text-color: #6b7280;
-      --seriph-icon-color: #9ca3af;
+  @layer jamwidgets {
+    .jamwidgets-views {
+      --jamwidgets-text-color: #6b7280;
+      --jamwidgets-icon-color: #9ca3af;
 
       display: inline-flex;
       align-items: center;
       gap: 0.375rem;
       font-size: 0.875rem;
-      color: var(--seriph-text-color);
+      color: var(--jamwidgets-text-color);
     }
 
     /* Dark theme */
-    .seriph-views.seriph-theme-dark {
-      --seriph-text-color: #9ca3af;
-      --seriph-icon-color: #6b7280;
+    .jamwidgets-views.jamwidgets-theme-dark {
+      --jamwidgets-text-color: #9ca3af;
+      --jamwidgets-icon-color: #6b7280;
     }
 
     /* Auto theme - follows prefers-color-scheme */
     @media (prefers-color-scheme: dark) {
-      .seriph-views.seriph-theme-auto {
-        --seriph-text-color: #9ca3af;
-        --seriph-icon-color: #6b7280;
+      .jamwidgets-views.jamwidgets-theme-auto {
+        --jamwidgets-text-color: #9ca3af;
+        --jamwidgets-icon-color: #6b7280;
       }
     }
 
-    .seriph-views-icon {
+    .jamwidgets-views-icon {
       display: flex;
-      color: var(--seriph-icon-color);
+      color: var(--jamwidgets-icon-color);
     }
 
-    .seriph-views-icon svg {
+    .jamwidgets-views-icon svg {
       width: 1em;
       height: 1em;
     }
 
-    .seriph-views-count {
+    .jamwidgets-views-count {
       font-variant-numeric: tabular-nums;
     }
 
-    .seriph-views-unique {
-      color: var(--seriph-icon-color);
+    .jamwidgets-views-unique {
+      color: var(--jamwidgets-icon-color);
       font-size: 0.75rem;
     }
   }

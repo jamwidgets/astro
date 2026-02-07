@@ -1,16 +1,16 @@
 ---
 /**
- * Seriph Subscribe Component
+ * JamWidgets Subscribe Component
  *
  * A subscription form for email updates. Implements double opt-in -
  * users receive a confirmation email and must click to confirm.
  *
  * @example
- * <Subscribe siteKey={import.meta.env.SERIPH_SITE_KEY} />
+ * <Subscribe siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} />
  *
  * @example With custom styling
  * <Subscribe
- *   siteKey={import.meta.env.SERIPH_SITE_KEY}
+ *   siteKey={import.meta.env.JAMWIDGETS_SITE_KEY}
  *   buttonText="Get Updates"
  *   placeholder="Enter your email"
  *   successMessage="Check your inbox!"
@@ -20,7 +20,7 @@
 interface Props {
   /** Your site key (required) */
   siteKey: string;
-  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** Submit button text (default: 'Subscribe') */
   buttonText?: string;
@@ -34,7 +34,7 @@ interface Props {
   class?: string;
 }
 
-const DEFAULT_ENDPOINT = "https://seriph.xyz";
+const DEFAULT_ENDPOINT = "https://jamwidgets.com";
 const API_PATH = "/api/v1";
 
 const {
@@ -52,22 +52,22 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 ---
 
 <form
-  class:list={["seriph-subscribe", `seriph-theme-${theme}`, className]}
-  data-seriph-subscribe
+  class:list={["jamwidgets-subscribe", `jamwidgets-theme-${theme}`, className]}
+  data-jamwidgets-subscribe
   data-endpoint={baseUrl}
   data-site-key={siteKey}
   data-success-message={successMessage}
 >
-  <div class="seriph-subscribe-input-group">
+  <div class="jamwidgets-subscribe-input-group">
     <input
       type="email"
       name="email"
       required
       placeholder={placeholder}
-      class="seriph-subscribe-input"
+      class="jamwidgets-subscribe-input"
       autocomplete="email"
     />
-    <button type="submit" class="seriph-subscribe-button">
+    <button type="submit" class="jamwidgets-subscribe-button">
       {buttonText}
     </button>
   </div>
@@ -78,7 +78,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
   </div>
 
   <!-- Success/Error message container (hidden by default) -->
-  <div class="seriph-subscribe-message" style="display: none;" aria-live="polite"></div>
+  <div class="jamwidgets-subscribe-message" style="display: none;" aria-live="polite"></div>
 </form>
 
 <script>
@@ -88,7 +88,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
   }
 
   // Get or create a visitor ID for anonymous users
-  const VISITOR_KEY = "seriph_visitor_id";
+  const VISITOR_KEY = "jamwidgets_visitor_id";
   function getVisitorId(): string {
     let id = localStorage.getItem(VISITOR_KEY);
     if (!id) {
@@ -98,7 +98,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
     return id;
   }
 
-  document.querySelectorAll("[data-seriph-subscribe]").forEach((form) => {
+  document.querySelectorAll("[data-jamwidgets-subscribe]").forEach((form) => {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -106,12 +106,12 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       const endpoint = formEl.dataset.endpoint;
       const siteKey = formEl.dataset.siteKey;
       const customSuccessMessage = formEl.dataset.successMessage;
-      const messageEl = formEl.querySelector(".seriph-subscribe-message") as HTMLElement | null;
+      const messageEl = formEl.querySelector(".jamwidgets-subscribe-message") as HTMLElement | null;
       const submitBtn = formEl.querySelector('button[type="submit"]') as HTMLButtonElement | null;
       const inputEl = formEl.querySelector('input[name="email"]') as HTMLInputElement | null;
 
       if (!endpoint || !siteKey) {
-        console.error("Seriph Subscribe: missing siteKey or endpoint");
+        console.error("JamWidgets Subscribe: missing siteKey or endpoint");
         return;
       }
 
@@ -123,7 +123,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       });
 
       // Dispatch loading event
-      formEl.dispatchEvent(new CustomEvent("seriph:loading"));
+      formEl.dispatchEvent(new CustomEvent("jamwidgets:loading"));
 
       // Disable submit button and show loading state
       if (submitBtn) {
@@ -137,8 +137,8 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Seriph-Key": siteKey,
-            "X-Seriph-Visitor": getVisitorId(),
+            "X-JamWidgets-Key": siteKey,
+            "X-JamWidgets-Visitor": getVisitorId(),
           },
           body: JSON.stringify(data),
         });
@@ -154,12 +154,12 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
         if (messageEl) {
           messageEl.textContent = customSuccessMessage || result.message;
           messageEl.style.display = "block";
-          messageEl.className = "seriph-subscribe-message seriph-subscribe-success";
+          messageEl.className = "jamwidgets-subscribe-message jamwidgets-subscribe-success";
         }
 
         // Dispatch success event with response data
         formEl.dispatchEvent(
-          new CustomEvent("seriph:success", {
+          new CustomEvent("jamwidgets:success", {
             detail: result,
           }),
         );
@@ -173,11 +173,11 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
         if (messageEl) {
           messageEl.textContent = error instanceof Error ? error.message : "Something went wrong";
           messageEl.style.display = "block";
-          messageEl.className = "seriph-subscribe-message seriph-subscribe-error";
+          messageEl.className = "jamwidgets-subscribe-message jamwidgets-subscribe-error";
         }
 
         formEl.dispatchEvent(
-          new CustomEvent("seriph:error", {
+          new CustomEvent("jamwidgets:error", {
             detail: error,
           }),
         );
@@ -193,122 +193,119 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 </script>
 
 <style is:global>
-  @layer seriph {
-    .seriph-subscribe {
-      --seriph-border-color: #d1d5db;
-      --seriph-input-bg: #ffffff;
-      --seriph-input-text: #111827;
-      --seriph-button-bg: #4f46e5;
-      --seriph-button-text: #ffffff;
-      --seriph-button-hover: #4338ca;
-      --seriph-success-bg: #dcfce7;
-      --seriph-success-text: #166534;
-      --seriph-success-border: #bbf7d0;
-      --seriph-error-bg: #fef2f2;
-      --seriph-error-text: #991b1b;
-      --seriph-error-border: #fecaca;
-      --seriph-focus-ring: rgba(79, 70, 229, 0.5);
+  .jamwidgets-subscribe {
+    --jamwidgets-border-color: #d1d5db;
+    --jamwidgets-input-bg: #ffffff;
+    --jamwidgets-input-text: #111827;
+    --jamwidgets-button-bg: #4f46e5;
+    --jamwidgets-button-text: #ffffff;
+    --jamwidgets-button-hover: #4338ca;
+    --jamwidgets-success-bg: #dcfce7;
+    --jamwidgets-success-text: #166534;
+    --jamwidgets-success-border: #bbf7d0;
+    --jamwidgets-error-bg: #fef2f2;
+    --jamwidgets-error-text: #991b1b;
+    --jamwidgets-error-border: #fecaca;
+    --jamwidgets-focus-ring: rgba(79, 70, 229, 0.5);
+    position: relative;
+  }
 
-      position: relative;
-    }
+  /* Dark theme */
+  .jamwidgets-subscribe.jamwidgets-theme-dark {
+    --jamwidgets-border-color: #4b5563;
+    --jamwidgets-input-bg: #1f2937;
+    --jamwidgets-input-text: #f9fafb;
+    --jamwidgets-button-bg: #6366f1;
+    --jamwidgets-button-hover: #818cf8;
+    --jamwidgets-success-bg: rgba(34, 197, 94, 0.15);
+    --jamwidgets-success-text: #86efac;
+    --jamwidgets-success-border: rgba(34, 197, 94, 0.3);
+    --jamwidgets-error-bg: rgba(239, 68, 68, 0.15);
+    --jamwidgets-error-text: #fca5a5;
+    --jamwidgets-error-border: rgba(239, 68, 68, 0.3);
+  }
 
-    /* Dark theme */
-    .seriph-subscribe.seriph-theme-dark {
-      --seriph-border-color: #4b5563;
-      --seriph-input-bg: #1f2937;
-      --seriph-input-text: #f9fafb;
-      --seriph-button-bg: #6366f1;
-      --seriph-button-hover: #818cf8;
-      --seriph-success-bg: rgba(34, 197, 94, 0.15);
-      --seriph-success-text: #86efac;
-      --seriph-success-border: rgba(34, 197, 94, 0.3);
-      --seriph-error-bg: rgba(239, 68, 68, 0.15);
-      --seriph-error-text: #fca5a5;
-      --seriph-error-border: rgba(239, 68, 68, 0.3);
+  /* Auto theme - follows prefers-color-scheme */
+  @media (prefers-color-scheme: dark) {
+    .jamwidgets-subscribe.jamwidgets-theme-auto {
+      --jamwidgets-border-color: #4b5563;
+      --jamwidgets-input-bg: #1f2937;
+      --jamwidgets-input-text: #f9fafb;
+      --jamwidgets-button-bg: #6366f1;
+      --jamwidgets-button-hover: #818cf8;
+      --jamwidgets-success-bg: rgba(34, 197, 94, 0.15);
+      --jamwidgets-success-text: #86efac;
+      --jamwidgets-success-border: rgba(34, 197, 94, 0.3);
+      --jamwidgets-error-bg: rgba(239, 68, 68, 0.15);
+      --jamwidgets-error-text: #fca5a5;
+      --jamwidgets-error-border: rgba(239, 68, 68, 0.3);
     }
+  }
 
-    /* Auto theme - follows prefers-color-scheme */
-    @media (prefers-color-scheme: dark) {
-      .seriph-subscribe.seriph-theme-auto {
-        --seriph-border-color: #4b5563;
-        --seriph-input-bg: #1f2937;
-        --seriph-input-text: #f9fafb;
-        --seriph-button-bg: #6366f1;
-        --seriph-button-hover: #818cf8;
-        --seriph-success-bg: rgba(34, 197, 94, 0.15);
-        --seriph-success-text: #86efac;
-        --seriph-success-border: rgba(34, 197, 94, 0.3);
-        --seriph-error-bg: rgba(239, 68, 68, 0.15);
-        --seriph-error-text: #fca5a5;
-        --seriph-error-border: rgba(239, 68, 68, 0.3);
-      }
-    }
+  .jamwidgets-subscribe-input-group {
+    display: flex;
+    gap: 0.5rem;
+  }
 
-    .seriph-subscribe-input-group {
-      display: flex;
-      gap: 0.5rem;
-    }
+  .jamwidgets-subscribe-input {
+    flex: 1;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--jamwidgets-border-color);
+    border-radius: 0.375rem;
+    background-color: var(--jamwidgets-input-bg);
+    color: var(--jamwidgets-input-text);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
 
-    .seriph-subscribe-input {
-      flex: 1;
-      padding: 0.625rem 0.875rem;
-      border: 1px solid var(--seriph-border-color);
-      border-radius: 0.375rem;
-      background-color: var(--seriph-input-bg);
-      color: var(--seriph-input-text);
-      font-size: 0.875rem;
-      line-height: 1.25rem;
-    }
+  .jamwidgets-subscribe-input:focus {
+    outline: none;
+    border-color: var(--jamwidgets-button-bg);
+    box-shadow: 0 0 0 3px var(--jamwidgets-focus-ring);
+  }
 
-    .seriph-subscribe-input:focus {
-      outline: none;
-      border-color: var(--seriph-button-bg);
-      box-shadow: 0 0 0 3px var(--seriph-focus-ring);
-    }
+  .jamwidgets-subscribe-input::placeholder {
+    color: #9ca3af;
+  }
 
-    .seriph-subscribe-input::placeholder {
-      color: #9ca3af;
-    }
+  .jamwidgets-subscribe-button {
+    padding: 0.625rem 1rem;
+    border: none;
+    border-radius: 0.375rem;
+    background-color: var(--jamwidgets-button-bg);
+    color: var(--jamwidgets-button-text);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    white-space: nowrap;
+  }
 
-    .seriph-subscribe-button {
-      padding: 0.625rem 1rem;
-      border: none;
-      border-radius: 0.375rem;
-      background-color: var(--seriph-button-bg);
-      color: var(--seriph-button-text);
-      font-size: 0.875rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background-color 0.15s ease;
-      white-space: nowrap;
-    }
+  .jamwidgets-subscribe-button:hover:not(:disabled) {
+    background-color: var(--jamwidgets-button-hover);
+  }
 
-    .seriph-subscribe-button:hover:not(:disabled) {
-      background-color: var(--seriph-button-hover);
-    }
+  .jamwidgets-subscribe-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 
-    .seriph-subscribe-button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
+  .jamwidgets-subscribe-message {
+    margin-top: 0.75rem;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+  }
 
-    .seriph-subscribe-message {
-      margin-top: 0.75rem;
-      padding: 0.625rem 0.875rem;
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
-    }
+  .jamwidgets-subscribe-success {
+    background-color: var(--jamwidgets-success-bg);
+    color: var(--jamwidgets-success-text);
+    border: 1px solid var(--jamwidgets-success-border);
+  }
 
-    .seriph-subscribe-success {
-      background-color: var(--seriph-success-bg);
-      color: var(--seriph-success-text);
-      border: 1px solid var(--seriph-success-border);
-    }
-
-    .seriph-subscribe-error {
-      background-color: var(--seriph-error-bg);
-      color: var(--seriph-error-text);
-      border: 1px solid var(--seriph-error-border);
-    }
+  .jamwidgets-subscribe-error {
+    background-color: var(--jamwidgets-error-bg);
+    color: var(--jamwidgets-error-text);
+    border: 1px solid var(--jamwidgets-error-border);
   }
 </style>

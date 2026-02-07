@@ -1,16 +1,15 @@
 {
-  "name": "@seriphxyz/astro",
-  "version": "0.1.11",
-  "description": "Astro components and content loader for Seriph widgets (forms, comments, reactions, posts)",
+  "name": "@jamwidgets/astro",
+  "version": "0.1.1",
+  "description": "Astro components and content loader for Jamwidgets (forms, comments, reactions, posts)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/seriphxyz/astro.git"
+    "url": "git+https://github.com/jamwidgets/astro.git"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
-  "homepage": "https://seriph.xyz",
+  "homepage": "https://jamwidgets.com",
   "author": "Tim Marks <tim@imothee.xyz>",
   "type": "module",
   "exports": {
@@ -44,7 +43,7 @@
   },
   "keywords": [
     "astro",
-    "seriph",
+    "jamwidgets",
     "forms",
     "comments",
     "reactions",
@@ -55,7 +54,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@seriphxyz/core": "workspace:*"
+    "@jamwidgets/core": "workspace:*"
   },
   "peerDependencies": {
     "astro": "^5.0.0"

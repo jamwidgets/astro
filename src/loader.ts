@@ -1,16 +1,16 @@
 /**
- * Astro Content Loader for Seriph Posts
+ * Astro Content Loader for Jamwidgets Posts
  *
- * Use this loader to fetch posts from your Seriph instance at build time.
+ * Use this loader to fetch posts from your Jamwidgets instance at build time.
  *
  * @example
  * // In src/content.config.ts
  * import { defineCollection } from 'astro:content';
- * import { seriphPostsLoader } from '@seriphxyz/astro/loader';
+ * import { jamwidgetsPostsLoader } from '@jamwidgets/astro/loader';
  *
  * const posts = defineCollection({
- *   loader: seriphPostsLoader({
- *     siteKey: import.meta.env.SERIPH_SITE_KEY,
+ *   loader: jamwidgetsPostsLoader({
+ *     siteKey: import.meta.env.JAMWIDGETS_SITE_KEY,
  *   }),
  * });
  *
@@ -23,19 +23,20 @@ import {
   getSiteKey,
   fetchPosts as coreFetchPosts,
   fetchPost as coreFetchPost,
-  type SeriphPost,
+  type JamwidgetsPost,
+  type SeriphPost, // deprecated alias
   type FetchPostsOptions,
   type FetchPostOptions,
-} from "@seriphxyz/core";
+} from "@jamwidgets/core";
 
 // Re-export types and functions from core
-export type { SeriphPost, FetchPostsOptions, FetchPostOptions };
+export type { JamwidgetsPost, SeriphPost, FetchPostsOptions, FetchPostOptions };
 export { coreFetchPosts as fetchPosts, coreFetchPost as fetchPost };
 
-export interface SeriphPostsLoaderOptions {
+export interface JamwidgetsPostsLoaderOptions {
   /** Your site key (required) */
   siteKey: string;
-  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  /** Base URL of your Jamwidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** Filter posts by tag */
   tag?: string;
@@ -45,9 +46,12 @@ export interface SeriphPostsLoaderOptions {
   onError?: "throw" | "warn" | "ignore";
 }
 
+/** @deprecated Use JamwidgetsPostsLoaderOptions instead */
+export type SeriphPostsLoaderOptions = JamwidgetsPostsLoaderOptions;
+
 interface LoaderContext {
   store: {
-    set: (entry: { id: string; data: SeriphPost }) => void;
+    set: (entry: { id: string; data: JamwidgetsPost }) => void;
     clear: () => void;
   };
   logger: {
@@ -59,16 +63,16 @@ interface LoaderContext {
 }
 
 interface ApiResponse {
-  posts: SeriphPost[];
+  posts: JamwidgetsPost[];
   total: number;
 }
 
 /**
- * Creates an Astro content loader that fetches posts from Seriph.
+ * Creates an Astro content loader that fetches posts from Jamwidgets.
  *
  * Posts are fetched at build time and cached by Astro.
  */
-export function seriphPostsLoader(options: SeriphPostsLoaderOptions) {
+export function jamwidgetsPostsLoader(options: JamwidgetsPostsLoaderOptions) {
   const {
     endpoint = DEFAULT_ENDPOINT,
     tag,
@@ -80,7 +84,7 @@ export function seriphPostsLoader(options: SeriphPostsLoaderOptions) {
   const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
   return {
-    name: "seriph-posts-loader",
+    name: "jamwidgets-posts-loader",
 
     async load(context: LoaderContext) {
       const { store, logger } = context;
@@ -96,7 +100,11 @@ export function seriphPostsLoader(options: SeriphPostsLoaderOptions) {
 
         const response = await fetch(url.toString(), {
           headers: {
+            "X-Jamwidgets-Key": siteKey,
+            // Legacy headers for backward compatibility
             "X-Seriph-Key": siteKey,
+            // User-Agent to avoid bot detection (Cloudflare, etc.)
+            "User-Agent": "JamwidgetsAstroLoader/1.0",
           },
         });
 
@@ -117,7 +125,7 @@ export function seriphPostsLoader(options: SeriphPostsLoaderOptions) {
           });
         }
 
-        logger.info(`Loaded ${data.posts.length} posts from Seriph`);
+        logger.info(`Loaded ${data.posts.length} posts from Jamwidgets`);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
 
@@ -131,3 +139,6 @@ export function seriphPostsLoader(options: SeriphPostsLoaderOptions) {
     },
   };
 }
+
+/** @deprecated Use jamwidgetsPostsLoader instead */
+export const seriphPostsLoader = jamwidgetsPostsLoader;

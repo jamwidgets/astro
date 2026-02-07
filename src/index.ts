@@ -1,8 +1,8 @@
 /**
- * @seriphxyz/astro
+ * @jamwidgets/astro
  *
- * Astro components and content loader for Seriph widgets.
- * Re-exports all types, API functions, and controllers from @seriphxyz/core.
+ * Astro components and content loader for Jamwidgets.
+ * Re-exports all types, API functions, and controllers from @jamwidgets/core.
  */
 
 // Re-export everything from core
@@ -13,12 +13,14 @@ export {
   VISITOR_STORAGE_KEY,
 
   // Types
-  type SeriphConfig,
+  type JamWidgetsConfig,
+  type SeriphConfig, // deprecated alias
   type Comment,
   type ReactionCounts,
   type FormSubmitResponse,
   type SubscribeResponse,
-  type SeriphPost,
+  type JamwidgetsPost,
+  type SeriphPost, // deprecated alias
   type Announcement,
   type AnnouncementType,
   type Poll,
@@ -114,10 +116,12 @@ export {
   FeedbackController,
   PollController,
   AnnouncementsController,
-} from "@seriphxyz/core";
+} from "@jamwidgets/core";
 
 // Re-export loader (Astro-specific)
 export {
-  seriphPostsLoader,
-  type SeriphPostsLoaderOptions,
+  jamwidgetsPostsLoader,
+  seriphPostsLoader, // deprecated alias
+  type JamwidgetsPostsLoaderOptions,
+  type SeriphPostsLoaderOptions, // deprecated alias
 } from "./loader.js";
