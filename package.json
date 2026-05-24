@@ -57,7 +57,7 @@
     "@jamwidgets/core": "workspace:*"
   },
   "peerDependencies": {
-    "astro": "^5.0.0"
+    "astro": "^5.0.0 || ^6.0.0"
   },
   "devDependencies": {
     "typescript": "^5.7.3"

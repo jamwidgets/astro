@@ -28,6 +28,7 @@ import {
   type FetchPostsOptions,
   type FetchPostOptions,
 } from "@jamwidgets/core";
+import type { Loader, LoaderContext } from "astro/loaders";
 
 // Re-export types and functions from core
 export type { JamwidgetsPost, SeriphPost, FetchPostsOptions, FetchPostOptions };
@@ -49,19 +50,6 @@ export interface JamwidgetsPostsLoaderOptions {
 /** @deprecated Use JamwidgetsPostsLoaderOptions instead */
 export type SeriphPostsLoaderOptions = JamwidgetsPostsLoaderOptions;
 
-interface LoaderContext {
-  store: {
-    set: (entry: { id: string; data: JamwidgetsPost }) => void;
-    clear: () => void;
-  };
-  logger: {
-    info: (message: string) => void;
-    warn: (message: string) => void;
-    error: (message: string) => void;
-  };
-  generateDigest: (data: unknown) => string;
-}
-
 interface ApiResponse {
   posts: JamwidgetsPost[];
   total: number;
@@ -72,7 +60,7 @@ interface ApiResponse {
  *
  * Posts are fetched at build time and cached by Astro.
  */
-export function jamwidgetsPostsLoader(options: JamwidgetsPostsLoaderOptions) {
+export function jamwidgetsPostsLoader(options: JamwidgetsPostsLoaderOptions): Loader {
   const {
     endpoint = DEFAULT_ENDPOINT,
     tag,
@@ -121,7 +109,7 @@ export function jamwidgetsPostsLoader(options: JamwidgetsPostsLoaderOptions) {
         for (const post of data.posts) {
           store.set({
             id: post.slug,
-            data: post,
+            data: { ...post },
           });
         }
 
