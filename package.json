@@ -1,6 +1,6 @@
 {
   "name": "@jamwidgets/astro",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Astro components and content loader for Jamwidgets (forms, comments, reactions, posts)",
   "repository": {
     "type": "git",
