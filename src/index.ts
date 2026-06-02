@@ -95,6 +95,12 @@ export {
   type FetchPostOptions,
   fetchPost,
 
+  // Site config + branding
+  type SiteConfig,
+  fetchSiteConfig,
+  POWERED_BY_URL,
+  POWERED_BY_LABEL,
+
   // Controllers
   type ControllerStatus,
   type ControllerListener,

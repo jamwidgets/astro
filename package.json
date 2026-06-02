@@ -23,6 +23,7 @@
     },
     "./Form": "./src/Form.astro",
     "./Comments": "./src/Comments.astro",
+    "./PoweredBy": "./src/PoweredBy.astro",
     "./Reactions": "./src/Reactions.astro",
     "./Views": "./src/Views.astro",
     "./Poll": "./src/Poll.astro",

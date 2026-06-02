@@ -1,0 +1,83 @@
+---
+/**
+ * JamWidgets "Powered by" footer.
+ *
+ * Rendered at the bottom of a drop-in widget. It hydrates hidden and only
+ * reveals itself when the site is on the Free tier (no custom branding) — the
+ * gate is the `hasCustomBranding` flag from `GET /api/v1/site`. Paid tiers
+ * (Pro/Team) keep it hidden, and if the config fetch fails we stay hidden so a
+ * paying site is never wrongly branded.
+ *
+ * Included by the block widgets (Comments, Form, Subscribe, Poll, Feedback,
+ * Waitlist); not the ambient ones (Reactions, Views, Announcements).
+ */
+interface Props {
+  /** Your site key (required) */
+  siteKey: string;
+  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
+  endpoint?: string;
+}
+
+const DEFAULT_ENDPOINT = "https://jamwidgets.com";
+const API_PATH = "/api/v1";
+
+const { siteKey, endpoint = DEFAULT_ENDPOINT } = Astro.props;
+const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
+---
+
+<div
+  class="jamwidgets-powered-by"
+  data-jamwidgets-branding
+  data-endpoint={baseUrl}
+  data-site-key={siteKey}
+  hidden
+>
+  <a href="https://jamwidgets.com/?utm_source=powered_by" target="_blank" rel="noopener noreferrer">
+    Powered by JamWidgets
+  </a>
+</div>
+
+<script>
+  // Reveal the footer only for sites without custom branding (Free tier).
+  // Site config is fetched once per (endpoint, siteKey); on any failure we
+  // leave the footer hidden (fail closed — never brand a paying site).
+  const brandingCache = new Map<string, Promise<boolean>>();
+
+  function hasCustomBranding(baseUrl: string, siteKey: string): Promise<boolean> {
+    const key = `${baseUrl}::${siteKey}`;
+    let pending = brandingCache.get(key);
+    if (!pending) {
+      pending = fetch(`${baseUrl}/site`, { headers: { "X-JamWidgets-Key": siteKey } })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => data?.site_config?.hasCustomBranding === true)
+        .catch(() => true);
+      brandingCache.set(key, pending);
+    }
+    return pending;
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-jamwidgets-branding]").forEach((el) => {
+    const baseUrl = el.dataset.endpoint;
+    const siteKey = el.dataset.siteKey;
+    if (!baseUrl || !siteKey) return;
+    hasCustomBranding(baseUrl, siteKey).then((custom) => {
+      if (!custom) el.removeAttribute("hidden");
+    });
+  });
+</script>
+
+<style>
+  .jamwidgets-powered-by {
+    margin-top: 0.75rem;
+    text-align: center;
+    font-size: 0.75rem;
+    line-height: 1;
+  }
+  .jamwidgets-powered-by a {
+    color: var(--jamwidgets-muted-color, #9ca3af);
+    text-decoration: none;
+  }
+  .jamwidgets-powered-by a:hover {
+    text-decoration: underline;
+  }
+</style>

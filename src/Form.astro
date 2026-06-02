@@ -40,6 +40,8 @@ const {
 
 // Build the API URL
 const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
+
+import PoweredBy from "./PoweredBy.astro";
 ---
 
 <form
@@ -58,6 +60,8 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
   <!-- Success/Error message container (hidden by default) -->
   <div class="jamwidgets-form-message" style="display: none;" aria-live="polite"></div>
+
+  <PoweredBy siteKey={siteKey} endpoint={endpoint} />
 </form>
 
 <script>

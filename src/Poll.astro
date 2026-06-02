@@ -38,6 +38,8 @@ const {
 
 // Build the API URL
 const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
+
+import PoweredBy from "./PoweredBy.astro";
 ---
 
 <div
@@ -60,6 +62,8 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
     <button type="button" class="jamwidgets-poll-submit" style="display: none;">Vote</button>
   </div>
   <div class="jamwidgets-poll-error" style="display: none;"></div>
+
+  <PoweredBy siteKey={siteKey} endpoint={endpoint} />
 </div>
 
 <script>
