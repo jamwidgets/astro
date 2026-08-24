@@ -1,0 +1,30 @@
+---
+interface Props {
+  /** Falls back to the `jamwidgets-site-key` meta tag. */
+  siteKey?: string;
+  /** Defaults to `https://jamwidgets.com`. */
+  endpoint?: string;
+}
+
+const { siteKey = "", endpoint = "" } = Astro.props;
+---
+
+<div
+  data-jamwidgets-analytics
+  data-site-key={siteKey}
+  data-endpoint={endpoint}
+  hidden
+>
+</div>
+
+<script>
+  import { initAnalytics } from "@jamwidgets/core";
+
+  const el = document.querySelector("[data-jamwidgets-analytics]") as
+    | HTMLElement
+    | null;
+  initAnalytics({
+    siteKey: el?.dataset.siteKey || undefined,
+    endpoint: el?.dataset.endpoint || undefined,
+  });
+</script>

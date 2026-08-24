@@ -71,20 +71,11 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 </form>
 
 <script>
+  import { getAttributionHeaders, getVisitorId } from "@jamwidgets/core";
+
   interface SubscribeResponse {
     success: boolean;
     message: string;
-  }
-
-  // Get or create a visitor ID for anonymous users
-  const VISITOR_KEY = "jamwidgets_visitor_id";
-  function getVisitorId(): string {
-    let id = localStorage.getItem(VISITOR_KEY);
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem(VISITOR_KEY, id);
-    }
-    return id;
   }
 
   document.querySelectorAll("[data-jamwidgets-subscribe-form]").forEach((form) => {
@@ -114,6 +105,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
         const response = await fetch(`${endpoint}/subscribe`, {
           method: "POST",
           headers: {
+            ...getAttributionHeaders(),
             "Content-Type": "application/json",
             "X-JamWidgets-Key": siteKey,
             "X-JamWidgets-Visitor": getVisitorId(),

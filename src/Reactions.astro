@@ -87,16 +87,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 </div>
 
 <script>
-  // Get or create a visitor ID for anonymous users
-  const VISITOR_KEY = "jamwidgets_visitor_id";
-  function getVisitorId(): string {
-    let id = localStorage.getItem(VISITOR_KEY);
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem(VISITOR_KEY, id);
-    }
-    return id;
-  }
+  import { getAttributionHeaders, getVisitorId } from "@jamwidgets/core";
 
   document.querySelectorAll("[data-jamwidgets-reactions]").forEach((container) => {
     const endpoint = (container as HTMLElement).dataset.endpoint;
@@ -107,6 +98,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
     const visitorId = getVisitorId();
     const headers = {
+      ...getAttributionHeaders(pageId),
       "X-JamWidgets-Key": siteKey,
       "X-JamWidgets-Visitor": visitorId,
     };
