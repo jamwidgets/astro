@@ -17,6 +17,7 @@ Add your JamWidgets site key to your `.env`:
 
 ```
 JAMWIDGETS_SITE_KEY=your_site_key_here
+SITE_URL=https://example.com
 ```
 
 ## Content Loader (Posts)
@@ -31,11 +32,15 @@ import { jamwidgetsPostsLoader } from "@jamwidgets/astro/loader";
 const posts = defineCollection({
   loader: jamwidgetsPostsLoader({
     siteKey: import.meta.env.JAMWIDGETS_SITE_KEY,
+    origin: import.meta.env.SITE_URL,
   }),
 });
 
 export const collections = { posts };
 ```
+
+Set `origin` to an allowed origin for production builds. JamWidgets rejects the
+request when the site restricts origins and the loader omits it.
 
 Then use in your pages:
 
@@ -59,6 +64,7 @@ const posts = await getCollection("posts");
 jamwidgetsPostsLoader({
   siteKey: string;        // Required - your JamWidgets site key
   endpoint?: string;      // Default: 'https://jamwidgets.com'
+  origin?: string;        // Site URL used for allowed-origin validation
   tag?: string;           // Filter posts by tag
   limit?: number;         // Max posts to fetch (default: 500)
   onError?: 'throw' | 'warn' | 'ignore';  // Error handling

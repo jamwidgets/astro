@@ -39,6 +39,8 @@ export interface JamwidgetsPostsLoaderOptions {
   siteKey: string;
   /** Base URL of your Jamwidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
+  /** Site origin sent for allowed-origin validation */
+  origin?: string;
   /** Filter posts by tag */
   tag?: string;
   /** Maximum number of posts to fetch (default: 500) */
@@ -63,6 +65,7 @@ interface ApiResponse {
 export function jamwidgetsPostsLoader(options: JamwidgetsPostsLoaderOptions): Loader {
   const {
     endpoint = DEFAULT_ENDPOINT,
+    origin,
     tag,
     limit = 500,
     onError = "throw",
@@ -89,10 +92,9 @@ export function jamwidgetsPostsLoader(options: JamwidgetsPostsLoaderOptions): Lo
         const response = await fetch(url.toString(), {
           headers: {
             "X-Jamwidgets-Key": siteKey,
-            // Legacy headers for backward compatibility
             "X-Seriph-Key": siteKey,
-            // User-Agent to avoid bot detection (Cloudflare, etc.)
             "User-Agent": "JamwidgetsAstroLoader/1.0",
+            ...(origin ? { Origin: origin } : {}),
           },
         });
 
