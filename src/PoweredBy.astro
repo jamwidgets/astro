@@ -5,7 +5,7 @@
  * Rendered at the bottom of a drop-in widget. It hydrates hidden and only
  * reveals itself when the site is on the Free tier (no custom branding) — the
  * gate is the `hasCustomBranding` flag from `GET /api/v1/site`. Paid tiers
- * (Pro/Team) keep it hidden, and if the config fetch fails we stay hidden so a
+ * Team sites keep it hidden, and if the config fetch fails we stay hidden so a
  * paying site is never wrongly branded.
  *
  * Included by the block widgets (Comments, Form, Subscribe, Poll, Feedback,
