@@ -14,6 +14,8 @@ interface Props {
   siteKey: string;
   /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
+  /** Theme preset. Defaults to inheriting the host page. */
+  theme?: "inherit" | "light" | "dark" | "auto";
   /** CSS class to add to the container */
   class?: string;
 }
@@ -24,15 +26,19 @@ const API_PATH = "/api/v1";
 const {
   siteKey,
   endpoint = DEFAULT_ENDPOINT,
+  theme = "inherit",
   class: className = "",
 } = Astro.props;
 
 // Build the API URL
 const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
+
+import Theme from "./Theme.astro";
 ---
 
+<Theme />
 <div
-  class:list={["jamwidgets-announcements", className]}
+  class:list={["jamwidgets-announcements", `jamwidgets-theme-${theme}`, className]}
   data-jamwidgets-announcements
   data-endpoint={baseUrl}
   data-site-key={siteKey}
@@ -155,23 +161,23 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
     }
 
     .jamwidgets-announcement-info {
-      background: #dbeafe;
-      color: #1e40af;
+      background: var(--jamwidgets-color-info-surface, color-mix(in srgb, #2563eb 10%, transparent));
+      color: var(--jamwidgets-color-info, currentColor);
     }
 
     .jamwidgets-announcement-warning {
-      background: #fef3c7;
-      color: #92400e;
+      background: var(--jamwidgets-color-notice-surface, color-mix(in srgb, #ca8a04 12%, transparent));
+      color: var(--jamwidgets-color-notice, currentColor);
     }
 
     .jamwidgets-announcement-success {
-      background: #dcfce7;
-      color: #166534;
+      background: var(--jamwidgets-success-bg);
+      color: var(--jamwidgets-success-text);
     }
 
     .jamwidgets-announcement-error {
-      background: #fef2f2;
-      color: #991b1b;
+      background: var(--jamwidgets-error-bg);
+      color: var(--jamwidgets-error-text);
     }
 
     .jamwidgets-announcement-content {
@@ -207,27 +213,5 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       height: 1rem;
     }
 
-    /* Dark mode adjustments */
-    @media (prefers-color-scheme: dark) {
-      .jamwidgets-announcement-info {
-        background: rgba(59, 130, 246, 0.2);
-        color: #93c5fd;
-      }
-
-      .jamwidgets-announcement-warning {
-        background: rgba(245, 158, 11, 0.2);
-        color: #fcd34d;
-      }
-
-      .jamwidgets-announcement-success {
-        background: rgba(34, 197, 94, 0.2);
-        color: #86efac;
-      }
-
-      .jamwidgets-announcement-error {
-        background: rgba(239, 68, 68, 0.2);
-        color: #fca5a5;
-      }
-    }
   }
 </style>

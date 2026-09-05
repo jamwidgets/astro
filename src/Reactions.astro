@@ -24,8 +24,8 @@ interface Props {
   reactions?: string[];
   /** Custom icons for reaction types (emoji or text) */
   icons?: Record<string, string>;
-  /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
-  theme?: "light" | "dark" | "auto";
+  /** Theme preset. Defaults to inheriting the host page. */
+  theme?: "inherit" | "light" | "dark" | "auto";
   /** CSS class to add to the container */
   class?: string;
 }
@@ -49,7 +49,7 @@ const {
   endpoint = DEFAULT_ENDPOINT,
   reactions = ["like"],
   icons = {},
-  theme = "light",
+  theme = "inherit",
   class: className = "",
 } = Astro.props;
 
@@ -62,8 +62,11 @@ function getIcon(type: string): string {
 
 // Build the API URL
 const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
+
+import Theme from "./Theme.astro";
 ---
 
+<Theme />
 <div
   class:list={["jamwidgets-reactions", `jamwidgets-theme-${theme}`, className]}
   data-jamwidgets-reactions
@@ -215,48 +218,11 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 </script>
 
 <style is:global>
+  @layer jamwidgets {
   .jamwidgets-reactions {
-    --jamwidgets-border-color: #e5e7eb;
-    --jamwidgets-button-bg: white;
-    --jamwidgets-hover-bg: #f3f4f6;
-    --jamwidgets-hover-border: #d1d5db;
-    --jamwidgets-active-bg: #dbeafe;
-    --jamwidgets-active-border: #93c5fd;
-    --jamwidgets-active-hover-bg: #bfdbfe;
-    --jamwidgets-count-color: #6b7280;
-    --jamwidgets-active-text: #1d4ed8;
-
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
-  }
-
-  /* Dark theme */
-  .jamwidgets-reactions.jamwidgets-theme-dark {
-    --jamwidgets-border-color: #374151;
-    --jamwidgets-button-bg: transparent;
-    --jamwidgets-hover-bg: #374151;
-    --jamwidgets-hover-border: #4b5563;
-    --jamwidgets-active-bg: rgba(59, 130, 246, 0.2);
-    --jamwidgets-active-border: #3b82f6;
-    --jamwidgets-active-hover-bg: rgba(59, 130, 246, 0.3);
-    --jamwidgets-count-color: #9ca3af;
-    --jamwidgets-active-text: #60a5fa;
-  }
-
-  /* Auto theme - follows prefers-color-scheme */
-  @media (prefers-color-scheme: dark) {
-    .jamwidgets-reactions.jamwidgets-theme-auto {
-      --jamwidgets-border-color: #374151;
-      --jamwidgets-button-bg: transparent;
-      --jamwidgets-hover-bg: #374151;
-      --jamwidgets-hover-border: #4b5563;
-      --jamwidgets-active-bg: rgba(59, 130, 246, 0.2);
-      --jamwidgets-active-border: #3b82f6;
-      --jamwidgets-active-hover-bg: rgba(59, 130, 246, 0.3);
-      --jamwidgets-count-color: #9ca3af;
-      --jamwidgets-active-text: #60a5fa;
-    }
   }
 
   .jamwidgets-reaction-btn {
@@ -305,5 +271,6 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
   .jamwidgets-reacted .jamwidgets-reaction-count {
     color: var(--jamwidgets-active-text);
+  }
   }
 </style>

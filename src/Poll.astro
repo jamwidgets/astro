@@ -19,8 +19,8 @@ interface Props {
   slug: string;
   /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
-  /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
-  theme?: "light" | "dark" | "auto";
+  /** Theme preset. Defaults to inheriting the host page. */
+  theme?: "inherit" | "light" | "dark" | "auto";
   /** CSS class to add to the container */
   class?: string;
 }
@@ -32,7 +32,7 @@ const {
   siteKey,
   slug,
   endpoint = DEFAULT_ENDPOINT,
-  theme = "light",
+  theme = "inherit",
   class: className = "",
 } = Astro.props;
 
@@ -40,8 +40,10 @@ const {
 const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
 import PoweredBy from "./PoweredBy.astro";
+import Theme from "./Theme.astro";
 ---
 
+<Theme />
 <div
   class:list={["jamwidgets-poll", `jamwidgets-theme-${theme}`, className]}
   data-jamwidgets-poll
@@ -297,49 +299,9 @@ import PoweredBy from "./PoweredBy.astro";
 </script>
 
 <style is:global>
+  @layer jamwidgets {
   .jamwidgets-poll {
-    --jamwidgets-border-color: #e5e7eb;
-    --jamwidgets-bg-color: white;
-    --jamwidgets-text-color: inherit;
-    --jamwidgets-text-muted: #6b7280;
-    --jamwidgets-hover-bg: #f3f4f6;
-    --jamwidgets-selected-bg: #dbeafe;
-    --jamwidgets-selected-border: #3b82f6;
-    --jamwidgets-bar-bg: #dbeafe;
-    --jamwidgets-voted-bar-bg: #3b82f6;
-    --jamwidgets-button-bg: #3b82f6;
-    --jamwidgets-button-text: white;
-    --jamwidgets-button-hover: #2563eb;
-
     font-family: inherit;
-  }
-
-  /* Dark theme */
-  .jamwidgets-poll.jamwidgets-theme-dark {
-    --jamwidgets-border-color: #374151;
-    --jamwidgets-bg-color: transparent;
-    --jamwidgets-text-color: #f3f4f6;
-    --jamwidgets-text-muted: #9ca3af;
-    --jamwidgets-hover-bg: #374151;
-    --jamwidgets-selected-bg: rgba(59, 130, 246, 0.2);
-    --jamwidgets-selected-border: #3b82f6;
-    --jamwidgets-bar-bg: rgba(59, 130, 246, 0.2);
-    --jamwidgets-voted-bar-bg: #3b82f6;
-  }
-
-  /* Auto theme */
-  @media (prefers-color-scheme: dark) {
-    .jamwidgets-poll.jamwidgets-theme-auto {
-      --jamwidgets-border-color: #374151;
-      --jamwidgets-bg-color: transparent;
-      --jamwidgets-text-color: #f3f4f6;
-      --jamwidgets-text-muted: #9ca3af;
-      --jamwidgets-hover-bg: #374151;
-      --jamwidgets-selected-bg: rgba(59, 130, 246, 0.2);
-      --jamwidgets-selected-border: #3b82f6;
-      --jamwidgets-bar-bg: rgba(59, 130, 246, 0.2);
-      --jamwidgets-voted-bar-bg: #3b82f6;
-    }
   }
 
   .jamwidgets-poll-loading {
@@ -473,22 +435,11 @@ import PoweredBy from "./PoweredBy.astro";
 
   .jamwidgets-poll-error {
     padding: 0.75rem;
-    background: #fef2f2;
-    color: #991b1b;
+    background: var(--jamwidgets-error-bg);
+    color: var(--jamwidgets-error-text);
     border-radius: 0.5rem;
     font-size: 0.875rem;
   }
 
-  .jamwidgets-theme-dark .jamwidgets-poll-error,
-  .jamwidgets-theme-auto .jamwidgets-poll-error {
-    background: rgba(239, 68, 68, 0.15);
-    color: #fca5a5;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .jamwidgets-theme-auto .jamwidgets-poll-error {
-      background: rgba(239, 68, 68, 0.15);
-      color: #fca5a5;
-    }
   }
 </style>

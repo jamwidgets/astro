@@ -21,8 +21,8 @@ interface Props {
   endpoint?: string;
   /** Show unique visitor count alongside total views (default: false) */
   showUnique?: boolean;
-  /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
-  theme?: "light" | "dark" | "auto";
+  /** Theme preset. Defaults to inheriting the host page. */
+  theme?: "inherit" | "light" | "dark" | "auto";
   /** CSS class to add to the container */
   class?: string;
 }
@@ -35,14 +35,17 @@ const {
   pageId,
   endpoint = DEFAULT_ENDPOINT,
   showUnique = false,
-  theme = "light",
+  theme = "inherit",
   class: className = "",
 } = Astro.props;
 
 // Build the API URL
 const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
+
+import Theme from "./Theme.astro";
 ---
 
+<Theme />
 <div
   class:list={["jamwidgets-views", `jamwidgets-theme-${theme}`, className]}
   data-jamwidgets-views
@@ -157,28 +160,11 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 <style is:global>
   @layer jamwidgets {
     .jamwidgets-views {
-      --jamwidgets-text-color: #6b7280;
-      --jamwidgets-icon-color: #9ca3af;
-
       display: inline-flex;
       align-items: center;
       gap: 0.375rem;
       font-size: 0.875rem;
       color: var(--jamwidgets-text-color);
-    }
-
-    /* Dark theme */
-    .jamwidgets-views.jamwidgets-theme-dark {
-      --jamwidgets-text-color: #9ca3af;
-      --jamwidgets-icon-color: #6b7280;
-    }
-
-    /* Auto theme - follows prefers-color-scheme */
-    @media (prefers-color-scheme: dark) {
-      .jamwidgets-views.jamwidgets-theme-auto {
-        --jamwidgets-text-color: #9ca3af;
-        --jamwidgets-icon-color: #6b7280;
-      }
     }
 
     .jamwidgets-views-icon {
@@ -192,6 +178,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
     }
 
     .jamwidgets-views-count {
+      color: var(--jamwidgets-count-color);
       font-variant-numeric: tabular-nums;
     }
 

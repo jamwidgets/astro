@@ -16,8 +16,8 @@ interface Props {
   pageId: string;
   /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
-  /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
-  theme?: "light" | "dark" | "auto";
+  /** Theme preset. Defaults to inheriting the host page. */
+  theme?: "inherit" | "light" | "dark" | "auto";
   /** CSS class to add to the container */
   class?: string;
 }
@@ -29,7 +29,7 @@ const {
   siteKey,
   pageId,
   endpoint = DEFAULT_ENDPOINT,
-  theme = "light",
+  theme = "inherit",
   class: className = "",
 } = Astro.props;
 
@@ -37,8 +37,10 @@ const {
 const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
 import PoweredBy from "./PoweredBy.astro";
+import Theme from "./Theme.astro";
 ---
 
+<Theme />
 <div
   class:list={["jamwidgets-comments", `jamwidgets-theme-${theme}`, className]}
   data-jamwidgets-comments
@@ -227,7 +229,7 @@ import PoweredBy from "./PoweredBy.astro";
               content: formData.get("content"),
               parentId: parentId ? parseInt(parentId, 10) : undefined,
               _gotcha: honeypot || undefined,
-              _jamwidgets_ts: loadTimestamp,
+              _seriph_ts: loadTimestamp,
             }),
           },
         );
@@ -260,55 +262,9 @@ import PoweredBy from "./PoweredBy.astro";
 </script>
 
 <style is:global>
+  @layer jamwidgets {
   .jamwidgets-comments {
-    --jamwidgets-border-color: #e5e7eb;
-    --jamwidgets-bg-color: #f9fafb;
-    --jamwidgets-text-color: inherit;
-    --jamwidgets-text-muted: #6b7280;
-    --jamwidgets-input-bg: white;
-    --jamwidgets-input-border: #9ca3af;
-    --jamwidgets-focus-color: #3b82f6;
-    --jamwidgets-focus-ring: rgba(59, 130, 246, 0.2);
-    --jamwidgets-button-bg: #3b82f6;
-    --jamwidgets-button-hover: #2563eb;
-    --jamwidgets-button-text: white;
-    --jamwidgets-notice-bg: #fef3c7;
-    --jamwidgets-notice-text: #92400e;
     color: var(--jamwidgets-text-color);
-  }
-
-  .jamwidgets-comments.jamwidgets-theme-dark {
-    --jamwidgets-border-color: #4b5563;
-    --jamwidgets-bg-color: transparent;
-    --jamwidgets-text-color: #f3f4f6;
-    --jamwidgets-text-muted: #9ca3af;
-    --jamwidgets-input-bg: #374151;
-    --jamwidgets-input-border: #9ca3af;
-    --jamwidgets-focus-color: #60a5fa;
-    --jamwidgets-focus-ring: rgba(96, 165, 250, 0.3);
-    --jamwidgets-button-bg: #3b82f6;
-    --jamwidgets-button-hover: #60a5fa;
-    --jamwidgets-button-text: white;
-    --jamwidgets-notice-bg: #422006;
-    --jamwidgets-notice-text: #fcd34d;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .jamwidgets-comments.jamwidgets-theme-auto {
-      --jamwidgets-border-color: #4b5563;
-      --jamwidgets-bg-color: transparent;
-      --jamwidgets-text-color: #f3f4f6;
-      --jamwidgets-text-muted: #9ca3af;
-      --jamwidgets-input-bg: #374151;
-      --jamwidgets-input-border: #9ca3af;
-      --jamwidgets-focus-color: #60a5fa;
-      --jamwidgets-focus-ring: rgba(96, 165, 250, 0.3);
-      --jamwidgets-button-bg: #3b82f6;
-      --jamwidgets-button-hover: #60a5fa;
-      --jamwidgets-button-text: white;
-      --jamwidgets-notice-bg: #422006;
-      --jamwidgets-notice-text: #fcd34d;
-    }
   }
 
   .jamwidgets-comments-form {
@@ -320,7 +276,7 @@ import PoweredBy from "./PoweredBy.astro";
     gap: 0.5rem;
   }
 
-  @media (min-width: 480px) {
+  @container (min-width: 30rem) {
     .jamwidgets-comments-form {
       grid-template-columns: 1fr 1fr;
     }
@@ -384,9 +340,7 @@ import PoweredBy from "./PoweredBy.astro";
 
   .jamwidgets-comments .jamwidgets-form-group input:focus,
   .jamwidgets-comments .jamwidgets-form-group textarea:focus {
-    outline: none;
     border-color: var(--jamwidgets-focus-color);
-    box-shadow: 0 0 0 2px var(--jamwidgets-focus-ring);
   }
 
   .jamwidgets-comments .jamwidgets-comments-form button[type="submit"] {
@@ -473,5 +427,6 @@ import PoweredBy from "./PoweredBy.astro";
     color: var(--jamwidgets-notice-text);
     border-radius: 0.25rem;
     font-size: 0.8125rem;
+  }
   }
 </style>

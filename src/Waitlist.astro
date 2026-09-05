@@ -13,8 +13,8 @@ interface Props {
   siteKey: string;
   /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
-  /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
-  theme?: "light" | "dark" | "auto";
+  /** Theme preset. Defaults to inheriting the host page. */
+  theme?: "inherit" | "light" | "dark" | "auto";
   /** Placeholder text for the email input (default: 'Enter your email') */
   placeholder?: string;
   /** Button text (default: 'Join Waitlist') */
@@ -31,7 +31,7 @@ const API_PATH = "/api/v1";
 const {
   siteKey,
   endpoint = DEFAULT_ENDPOINT,
-  theme = "light",
+  theme = "inherit",
   placeholder = "Enter your email",
   buttonText = "Join Waitlist",
   successMessage = "You're on the list!",
@@ -42,8 +42,10 @@ const {
 const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
 import PoweredBy from "./PoweredBy.astro";
+import Theme from "./Theme.astro";
 ---
 
+<Theme />
 <div
   class:list={["jamwidgets-waitlist", `jamwidgets-theme-${theme}`, className]}
   data-jamwidgets-waitlist
@@ -150,43 +152,9 @@ import PoweredBy from "./PoweredBy.astro";
 </script>
 
 <style is:global>
+  @layer jamwidgets {
   .jamwidgets-waitlist {
-    --jamwidgets-border-color: #9ca3af;
-    --jamwidgets-bg-color: white;
-    --jamwidgets-text-color: inherit;
-    --jamwidgets-text-muted: #6b7280;
-    --jamwidgets-button-bg: #3b82f6;
-    --jamwidgets-button-text: white;
-    --jamwidgets-button-hover: #2563eb;
-    --jamwidgets-success-color: #16a34a;
-    --jamwidgets-success-bg: #dcfce7;
-    --jamwidgets-error-color: #dc2626;
-    --jamwidgets-error-bg: #fef2f2;
     font-family: inherit;
-  }
-
-  .jamwidgets-waitlist.jamwidgets-theme-dark {
-    --jamwidgets-border-color: #9ca3af;
-    --jamwidgets-bg-color: #374151;
-    --jamwidgets-text-color: #f3f4f6;
-    --jamwidgets-text-muted: #9ca3af;
-    --jamwidgets-success-color: #22c55e;
-    --jamwidgets-success-bg: rgba(34, 197, 94, 0.15);
-    --jamwidgets-error-color: #ef4444;
-    --jamwidgets-error-bg: rgba(239, 68, 68, 0.15);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .jamwidgets-waitlist.jamwidgets-theme-auto {
-      --jamwidgets-border-color: #9ca3af;
-      --jamwidgets-bg-color: #374151;
-      --jamwidgets-text-color: #f3f4f6;
-      --jamwidgets-text-muted: #9ca3af;
-      --jamwidgets-success-color: #22c55e;
-      --jamwidgets-success-bg: rgba(34, 197, 94, 0.15);
-      --jamwidgets-error-color: #ef4444;
-      --jamwidgets-error-bg: rgba(239, 68, 68, 0.15);
-    }
   }
 
   .jamwidgets-waitlist-form {
@@ -207,9 +175,7 @@ import PoweredBy from "./PoweredBy.astro";
   }
 
   .jamwidgets-waitlist .jamwidgets-waitlist-input:focus {
-    outline: none;
     border-color: var(--jamwidgets-button-bg);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
   }
 
   .jamwidgets-waitlist .jamwidgets-waitlist-input::placeholder {
@@ -255,12 +221,13 @@ import PoweredBy from "./PoweredBy.astro";
     color: var(--jamwidgets-error-color);
   }
 
-  @media (max-width: 400px) {
+  @container (max-width: 25rem) {
     .jamwidgets-waitlist-form {
       flex-direction: column;
     }
     .jamwidgets-waitlist .jamwidgets-waitlist-submit {
       width: 100%;
     }
+  }
   }
 </style>

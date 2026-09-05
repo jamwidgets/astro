@@ -28,8 +28,8 @@ interface Props {
   placeholder?: string;
   /** Success message override (default: uses server response) */
   successMessage?: string;
-  /** Theme preset: 'light' (default), 'dark', or 'auto' (uses prefers-color-scheme) */
-  theme?: "light" | "dark" | "auto";
+  /** Theme preset. Defaults to inheriting the host page. */
+  theme?: "inherit" | "light" | "dark" | "auto";
   /** CSS class to add to the form */
   class?: string;
 }
@@ -43,7 +43,7 @@ const {
   buttonText = "Subscribe",
   placeholder = "your@email.com",
   successMessage,
-  theme = "light",
+  theme = "inherit",
   class: className = "",
 } = Astro.props;
 
@@ -51,8 +51,10 @@ const {
 const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
 import PoweredBy from "./PoweredBy.astro";
+import Theme from "./Theme.astro";
 ---
 
+<Theme />
 <form
   class:list={["jamwidgets-subscribe", `jamwidgets-theme-${theme}`, className]}
   data-jamwidgets-subscribe
@@ -197,53 +199,9 @@ import PoweredBy from "./PoweredBy.astro";
 </script>
 
 <style is:global>
+  @layer jamwidgets {
   .jamwidgets-subscribe {
-    --jamwidgets-border-color: #d1d5db;
-    --jamwidgets-input-bg: #ffffff;
-    --jamwidgets-input-text: #111827;
-    --jamwidgets-button-bg: #4f46e5;
-    --jamwidgets-button-text: #ffffff;
-    --jamwidgets-button-hover: #4338ca;
-    --jamwidgets-success-bg: #dcfce7;
-    --jamwidgets-success-text: #166534;
-    --jamwidgets-success-border: #bbf7d0;
-    --jamwidgets-error-bg: #fef2f2;
-    --jamwidgets-error-text: #991b1b;
-    --jamwidgets-error-border: #fecaca;
-    --jamwidgets-focus-ring: rgba(79, 70, 229, 0.5);
     position: relative;
-  }
-
-  /* Dark theme */
-  .jamwidgets-subscribe.jamwidgets-theme-dark {
-    --jamwidgets-border-color: #4b5563;
-    --jamwidgets-input-bg: #1f2937;
-    --jamwidgets-input-text: #f9fafb;
-    --jamwidgets-button-bg: #6366f1;
-    --jamwidgets-button-hover: #818cf8;
-    --jamwidgets-success-bg: rgba(34, 197, 94, 0.15);
-    --jamwidgets-success-text: #86efac;
-    --jamwidgets-success-border: rgba(34, 197, 94, 0.3);
-    --jamwidgets-error-bg: rgba(239, 68, 68, 0.15);
-    --jamwidgets-error-text: #fca5a5;
-    --jamwidgets-error-border: rgba(239, 68, 68, 0.3);
-  }
-
-  /* Auto theme - follows prefers-color-scheme */
-  @media (prefers-color-scheme: dark) {
-    .jamwidgets-subscribe.jamwidgets-theme-auto {
-      --jamwidgets-border-color: #4b5563;
-      --jamwidgets-input-bg: #1f2937;
-      --jamwidgets-input-text: #f9fafb;
-      --jamwidgets-button-bg: #6366f1;
-      --jamwidgets-button-hover: #818cf8;
-      --jamwidgets-success-bg: rgba(34, 197, 94, 0.15);
-      --jamwidgets-success-text: #86efac;
-      --jamwidgets-success-border: rgba(34, 197, 94, 0.3);
-      --jamwidgets-error-bg: rgba(239, 68, 68, 0.15);
-      --jamwidgets-error-text: #fca5a5;
-      --jamwidgets-error-border: rgba(239, 68, 68, 0.3);
-    }
   }
 
   .jamwidgets-subscribe-input-group {
@@ -263,13 +221,11 @@ import PoweredBy from "./PoweredBy.astro";
   }
 
   .jamwidgets-subscribe-input:focus {
-    outline: none;
     border-color: var(--jamwidgets-button-bg);
-    box-shadow: 0 0 0 3px var(--jamwidgets-focus-ring);
   }
 
   .jamwidgets-subscribe-input::placeholder {
-    color: #9ca3af;
+    color: var(--jamwidgets-text-muted);
   }
 
   .jamwidgets-subscribe-button {
@@ -311,5 +267,16 @@ import PoweredBy from "./PoweredBy.astro";
     background-color: var(--jamwidgets-error-bg);
     color: var(--jamwidgets-error-text);
     border: 1px solid var(--jamwidgets-error-border);
+  }
+
+  @container (max-width: 25rem) {
+    .jamwidgets-subscribe-input-group {
+      flex-direction: column;
+    }
+
+    .jamwidgets-subscribe-button {
+      width: 100%;
+    }
+  }
   }
 </style>

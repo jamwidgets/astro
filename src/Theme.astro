@@ -1,0 +1,129 @@
+<style is:global>
+  @layer jamwidgets {
+    :where(
+      .jamwidgets-announcements,
+      .jamwidgets-comments,
+      .jamwidgets-feedback,
+      .jamwidgets-form,
+      .jamwidgets-poll,
+      .jamwidgets-reactions,
+      .jamwidgets-subscribe,
+      .jamwidgets-views,
+      .jamwidgets-waitlist
+    ) {
+      --jamwidgets-border-color: var(--jamwidgets-color-border, color-mix(in srgb, currentColor 22%, transparent));
+      --jamwidgets-bg-color: var(--jamwidgets-color-surface, transparent);
+      --jamwidgets-input-bg: var(--jamwidgets-color-surface, transparent);
+      --jamwidgets-input-text: var(--jamwidgets-color-text, currentColor);
+      --jamwidgets-input-border: var(--jamwidgets-color-border, color-mix(in srgb, currentColor 35%, transparent));
+      --jamwidgets-text-color: var(--jamwidgets-color-text, currentColor);
+      --jamwidgets-text-muted: var(--jamwidgets-color-muted, color-mix(in srgb, currentColor 62%, transparent));
+      --jamwidgets-icon-color: var(--jamwidgets-color-muted, color-mix(in srgb, currentColor 55%, transparent));
+      --jamwidgets-count-color: var(--jamwidgets-color-muted, color-mix(in srgb, currentColor 62%, transparent));
+      --jamwidgets-button-bg: var(--jamwidgets-color-accent, ButtonFace);
+      --jamwidgets-button-hover: var(--jamwidgets-color-accent-hover, color-mix(in srgb, var(--jamwidgets-color-accent, ButtonFace) 82%, black));
+      --jamwidgets-button-text: var(--jamwidgets-color-on-accent, ButtonText);
+      --jamwidgets-focus-color: var(--jamwidgets-color-accent, currentColor);
+      --jamwidgets-hover-bg: var(--jamwidgets-color-hover, color-mix(in srgb, currentColor 7%, transparent));
+      --jamwidgets-hover-border: var(--jamwidgets-color-border, color-mix(in srgb, currentColor 32%, transparent));
+      --jamwidgets-selected-bg: var(--jamwidgets-color-selected, color-mix(in srgb, var(--jamwidgets-color-accent, currentColor) 12%, transparent));
+      --jamwidgets-selected-border: var(--jamwidgets-color-accent, currentColor);
+      --jamwidgets-active-bg: var(--jamwidgets-color-selected, color-mix(in srgb, var(--jamwidgets-color-accent, currentColor) 12%, transparent));
+      --jamwidgets-active-border: var(--jamwidgets-color-accent, currentColor);
+      --jamwidgets-active-hover-bg: var(--jamwidgets-color-selected-hover, color-mix(in srgb, var(--jamwidgets-color-accent, currentColor) 18%, transparent));
+      --jamwidgets-active-text: var(--jamwidgets-color-accent, currentColor);
+      --jamwidgets-bar-bg: var(--jamwidgets-color-selected, color-mix(in srgb, var(--jamwidgets-color-accent, currentColor) 12%, transparent));
+      --jamwidgets-voted-bar-bg: var(--jamwidgets-color-accent, currentColor);
+      --jamwidgets-success-bg: var(--jamwidgets-color-success-surface, color-mix(in srgb, #16a34a 12%, transparent));
+      --jamwidgets-success-text: var(--jamwidgets-color-success, currentColor);
+      --jamwidgets-success-border: var(--jamwidgets-color-success-border, color-mix(in srgb, #16a34a 30%, transparent));
+      --jamwidgets-success-color: var(--jamwidgets-color-success, currentColor);
+      --jamwidgets-error-bg: var(--jamwidgets-color-error-surface, color-mix(in srgb, #dc2626 10%, transparent));
+      --jamwidgets-error-text: var(--jamwidgets-color-error, currentColor);
+      --jamwidgets-error-border: var(--jamwidgets-color-error-border, color-mix(in srgb, #dc2626 28%, transparent));
+      --jamwidgets-error-color: var(--jamwidgets-color-error, currentColor);
+      --jamwidgets-notice-bg: var(--jamwidgets-color-notice-surface, color-mix(in srgb, #ca8a04 12%, transparent));
+      --jamwidgets-notice-text: var(--jamwidgets-color-notice, currentColor);
+      color: var(--jamwidgets-text-color);
+      font-family: inherit;
+      font-size: var(--jamwidgets-font-size, inherit);
+      line-height: var(--jamwidgets-line-height, inherit);
+    }
+
+    :where(.jamwidgets-comments, .jamwidgets-feedback, .jamwidgets-subscribe, .jamwidgets-waitlist) {
+      container-type: inline-size;
+    }
+
+    :where(
+      .jamwidgets-announcements,
+      .jamwidgets-comments,
+      .jamwidgets-feedback,
+      .jamwidgets-form,
+      .jamwidgets-poll,
+      .jamwidgets-reactions,
+      .jamwidgets-subscribe,
+      .jamwidgets-views,
+      .jamwidgets-waitlist
+    ),
+    :where(.jamwidgets-comments, .jamwidgets-feedback, .jamwidgets-form, .jamwidgets-poll, .jamwidgets-reactions, .jamwidgets-subscribe, .jamwidgets-waitlist) :where(button, input, textarea, select) {
+      box-sizing: border-box;
+    }
+
+    :where(.jamwidgets-comments, .jamwidgets-feedback, .jamwidgets-form, .jamwidgets-poll, .jamwidgets-reactions, .jamwidgets-subscribe, .jamwidgets-waitlist) :where(button, input, textarea, select) {
+      font-family: inherit;
+    }
+
+    :where(.jamwidgets-theme-light, .jamwidgets-theme-auto) {
+      color-scheme: light;
+      --jamwidgets-color-text: #1f2937;
+      --jamwidgets-color-muted: #6b7280;
+      --jamwidgets-color-surface: #ffffff;
+      --jamwidgets-color-border: #d1d5db;
+      --jamwidgets-color-accent: #374151;
+      --jamwidgets-color-accent-hover: #111827;
+      --jamwidgets-color-on-accent: #ffffff;
+      --jamwidgets-color-success: #15803d;
+      --jamwidgets-color-error: #b91c1c;
+      --jamwidgets-color-notice: #854d0e;
+      --jamwidgets-color-info: #1d4ed8;
+    }
+
+    :where(.jamwidgets-theme-dark) {
+      color-scheme: dark;
+      --jamwidgets-color-text: #f3f4f6;
+      --jamwidgets-color-muted: #9ca3af;
+      --jamwidgets-color-surface: #1f2937;
+      --jamwidgets-color-border: #4b5563;
+      --jamwidgets-color-accent: #d1d5db;
+      --jamwidgets-color-accent-hover: #f9fafb;
+      --jamwidgets-color-on-accent: #111827;
+      --jamwidgets-color-success: #86efac;
+      --jamwidgets-color-error: #fca5a5;
+      --jamwidgets-color-notice: #fde68a;
+      --jamwidgets-color-info: #93c5fd;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :where(.jamwidgets-theme-auto) {
+        color-scheme: dark;
+        --jamwidgets-color-text: #f3f4f6;
+        --jamwidgets-color-muted: #9ca3af;
+        --jamwidgets-color-surface: #1f2937;
+        --jamwidgets-color-border: #4b5563;
+        --jamwidgets-color-accent: #d1d5db;
+        --jamwidgets-color-accent-hover: #f9fafb;
+        --jamwidgets-color-on-accent: #111827;
+        --jamwidgets-color-success: #86efac;
+        --jamwidgets-color-error: #fca5a5;
+        --jamwidgets-color-notice: #fde68a;
+        --jamwidgets-color-info: #93c5fd;
+      }
+    }
+
+    :where(.jamwidgets-comments, .jamwidgets-feedback, .jamwidgets-form, .jamwidgets-poll, .jamwidgets-reactions, .jamwidgets-subscribe, .jamwidgets-waitlist) :where(button, input, textarea, select):focus-visible,
+    :where(.jamwidgets-announcement-dismiss):focus-visible {
+      outline: 2px solid var(--jamwidgets-focus-color);
+      outline-offset: 2px;
+    }
+  }
+</style>

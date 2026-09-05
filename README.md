@@ -239,17 +239,28 @@ await addReaction({
 
 ## Styling
 
-Components use CSS custom properties for theming. Override them to match your site:
+Components inherit their font and text color from the surrounding page by default, while interactive controls use the browser's accent colors. Use a preset when the widget sits outside your site's normal color context:
+
+```astro
+<Comments theme="auto" ... />
+```
+
+Set semantic CSS custom properties on a wrapper or the widget itself to match your site. The same tokens work across every styled component:
 
 ```css
-.jamwidgets-comments {
-  --jamwidgets-border-color: #e5e7eb;
-  --jamwidgets-bg-color: #f9fafb;
-  --jamwidgets-text-color: inherit;
-  --jamwidgets-button-bg: #3b82f6;
-  /* ... see component source for all variables */
+.article-widgets {
+  --jamwidgets-color-text: var(--color-ink);
+  --jamwidgets-color-muted: var(--color-ink-muted);
+  --jamwidgets-color-surface: var(--color-paper);
+  --jamwidgets-color-border: var(--color-rule);
+  --jamwidgets-color-accent: var(--color-link);
+  --jamwidgets-color-accent-hover: var(--color-link-hover);
+  --jamwidgets-color-on-accent: white;
+  --jamwidgets-focus-ring-color: color-mix(in srgb, var(--color-link) 28%, transparent);
 }
 ```
+
+Status colors can be customized with `--jamwidgets-color-success`, `--jamwidgets-color-error`, and `--jamwidgets-color-notice`. Components adapt to their container width, so subscribe, waitlist, comments, and feedback controls stack when embedded in a narrow column.
 
 ## License
 
