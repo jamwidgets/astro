@@ -23,8 +23,10 @@ const { siteKey = "", endpoint = "" } = Astro.props;
   const el = document.querySelector("[data-jamwidgets-analytics]") as
     | HTMLElement
     | null;
-  initAnalytics({
-    siteKey: el?.dataset.siteKey || undefined,
-    endpoint: el?.dataset.endpoint || undefined,
-  });
+  if (el) {
+    initAnalytics({
+      siteKey: el.dataset.siteKey || undefined,
+      endpoint: el.dataset.endpoint || undefined,
+    });
+  }
 </script>
