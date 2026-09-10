@@ -1,6 +1,6 @@
 ---
 /**
- * JamWidgets Headless Subscribe Form
+ * Jamwidgets Headless Subscribe Form
  *
  * A headless subscription form that handles API/state but lets you provide your own UI.
  * Use the default slot to provide your own email input and submit button.
@@ -34,7 +34,7 @@
 interface Props {
   /** Your site key (required) */
   siteKey: string;
-  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
+  /** Base URL of your Jamwidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** HTML id attribute for the form */
   id?: string;
@@ -87,7 +87,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       const siteKey = formEl.dataset.siteKey;
 
       if (!endpoint || !siteKey) {
-        console.error("JamWidgets SubscribeForm: missing siteKey or endpoint");
+        console.error("Jamwidgets SubscribeForm: missing siteKey or endpoint");
         return;
       }
 
@@ -107,8 +107,8 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
           headers: {
             ...getAttributionHeaders(),
             "Content-Type": "application/json",
-            "X-JamWidgets-Key": siteKey,
-            "X-JamWidgets-Visitor": getVisitorId(),
+            "X-Jamwidgets-Key": siteKey,
+            "X-Jamwidgets-Visitor": getVisitorId(),
           },
           body: JSON.stringify(data),
         });

@@ -1,6 +1,6 @@
 ---
 /**
- * JamWidgets Subscribe Component
+ * Jamwidgets Subscribe Component
  *
  * A subscription form for email updates. Implements double opt-in -
  * users receive a confirmation email and must click to confirm.
@@ -20,7 +20,7 @@
 interface Props {
   /** Your site key (required) */
   siteKey: string;
-  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
+  /** Base URL of your Jamwidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** Submit button text (default: 'Subscribe') */
   buttonText?: string;
@@ -117,7 +117,7 @@ import Theme from "./Theme.astro";
       const inputEl = formEl.querySelector('input[name="email"]') as HTMLInputElement | null;
 
       if (!endpoint || !siteKey) {
-        console.error("JamWidgets Subscribe: missing siteKey or endpoint");
+        console.error("Jamwidgets Subscribe: missing siteKey or endpoint");
         return;
       }
 
@@ -143,8 +143,8 @@ import Theme from "./Theme.astro";
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-JamWidgets-Key": siteKey,
-            "X-JamWidgets-Visitor": getVisitorId(),
+            "X-Jamwidgets-Key": siteKey,
+            "X-Jamwidgets-Visitor": getVisitorId(),
           },
           body: JSON.stringify(data),
         });

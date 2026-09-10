@@ -1,6 +1,6 @@
 ---
 /**
- * JamWidgets Embed Component
+ * Jamwidgets Embed Component
  *
  * Hydrates widget placeholders embedded in post content.
  * Place this component after your post content to activate
@@ -14,7 +14,7 @@
 interface Props {
   /** Your site key (required) */
   siteKey: string;
-  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
+  /** Base URL of your Jamwidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** Theme preset. Defaults to inheriting the host page. */
   theme?: "inherit" | "light" | "dark" | "auto";
@@ -74,7 +74,7 @@ import Theme from "./Theme.astro";
     return id;
   }
 
-  class JamWidgetsEmbed extends HTMLElement {
+  class JamwidgetsEmbed extends HTMLElement {
     connectedCallback() {
       const siteKey = this.dataset.siteKey!;
       const endpoint = this.dataset.endpoint!;
@@ -124,8 +124,8 @@ import Theme from "./Theme.astro";
     ) {
       const visitorId = getVisitorId();
       const headers = {
-        "X-JamWidgets-Key": config.siteKey,
-        "X-JamWidgets-Visitor": visitorId,
+        "X-Jamwidgets-Key": config.siteKey,
+        "X-Jamwidgets-Visitor": visitorId,
       };
 
       const loadingEl = container.querySelector(".jamwidgets-poll-loading") as HTMLElement;
@@ -313,7 +313,7 @@ import Theme from "./Theme.astro";
     }
   }
 
-  customElements.define("jamwidgets-embed", JamWidgetsEmbed);
+  customElements.define("jamwidgets-embed", JamwidgetsEmbed);
 </script>
 
 <style is:global>

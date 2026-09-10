@@ -13,7 +13,7 @@ export {
   VISITOR_STORAGE_KEY,
 
   // Types
-  type JamWidgetsConfig,
+  type JamwidgetsConfig,
   type SeriphConfig, // deprecated alias
   type Comment,
   type ReactionCounts,
@@ -95,7 +95,7 @@ export {
   type FetchPostOptions,
   fetchPost,
 
-  // Site config + branding
+  // Site config + powered-by attribution
   type SiteConfig,
   fetchSiteConfig,
   POWERED_BY_URL,

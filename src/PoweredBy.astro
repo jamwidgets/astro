@@ -1,11 +1,11 @@
 ---
 /**
- * JamWidgets "Powered by" footer.
+ * Jamwidgets "Powered by" footer.
  *
  * Rendered at the bottom of a drop-in widget. It hydrates hidden and only
- * reveals itself when the site is on the Free tier (no custom branding) — the
- * gate is the `hasCustomBranding` flag from `GET /api/v1/site`. Paid tiers
- * Team sites keep it hidden, and if the config fetch fails we stay hidden so a
+ * reveals itself when the site is on the Free tier — the gate is the
+ * `showPoweredBy` flag from `GET /api/v1/site`. Team sites keep it hidden, and
+ * if the config fetch fails we stay hidden so a
  * paying site is never wrongly branded.
  *
  * Included by the block widgets (Comments, Form, Subscribe, Poll, Feedback,
@@ -14,7 +14,7 @@
 interface Props {
   /** Your site key (required) */
   siteKey: string;
-  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
+  /** Base URL of your Jamwidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
 }
 
@@ -27,41 +27,41 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
 <div
   class="jamwidgets-powered-by"
-  data-jamwidgets-branding
+  data-jamwidgets-powered-by
   data-endpoint={baseUrl}
   data-site-key={siteKey}
   hidden
 >
   <a href="https://jamwidgets.com/?utm_source=powered_by" target="_blank" rel="noopener noreferrer">
-    Powered by JamWidgets
+    Powered by Jamwidgets
   </a>
 </div>
 
 <script>
-  // Reveal the footer only for sites without custom branding (Free tier).
+  // Reveal the footer only when the site config explicitly enables it.
   // Site config is fetched once per (endpoint, siteKey); on any failure we
   // leave the footer hidden (fail closed — never brand a paying site).
-  const brandingCache = new Map<string, Promise<boolean>>();
+  const poweredByCache = new Map<string, Promise<boolean>>();
 
-  function hasCustomBranding(baseUrl: string, siteKey: string): Promise<boolean> {
+  function showsPoweredBy(baseUrl: string, siteKey: string): Promise<boolean> {
     const key = `${baseUrl}::${siteKey}`;
-    let pending = brandingCache.get(key);
+    let pending = poweredByCache.get(key);
     if (!pending) {
-      pending = fetch(`${baseUrl}/site`, { headers: { "X-JamWidgets-Key": siteKey } })
+      pending = fetch(`${baseUrl}/site`, { headers: { "X-Jamwidgets-Key": siteKey } })
         .then((res) => (res.ok ? res.json() : null))
-        .then((data) => data?.site_config?.hasCustomBranding === true)
-        .catch(() => true);
-      brandingCache.set(key, pending);
+        .then((data) => data?.site_config?.showPoweredBy === true)
+        .catch(() => false);
+      poweredByCache.set(key, pending);
     }
     return pending;
   }
 
-  document.querySelectorAll<HTMLElement>("[data-jamwidgets-branding]").forEach((el) => {
+  document.querySelectorAll<HTMLElement>("[data-jamwidgets-powered-by]").forEach((el) => {
     const baseUrl = el.dataset.endpoint;
     const siteKey = el.dataset.siteKey;
     if (!baseUrl || !siteKey) return;
-    hasCustomBranding(baseUrl, siteKey).then((custom) => {
-      if (!custom) el.removeAttribute("hidden");
+    showsPoweredBy(baseUrl, siteKey).then((show) => {
+      if (show) el.removeAttribute("hidden");
     });
   });
 </script>

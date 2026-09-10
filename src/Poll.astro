@@ -1,6 +1,6 @@
 ---
 /**
- * JamWidgets Poll Component
+ * Jamwidgets Poll Component
  *
  * Displays an interactive poll with voting.
  * Results are shown based on poll settings.
@@ -17,7 +17,7 @@ interface Props {
   siteKey: string;
   /** The poll slug (required) */
   slug: string;
-  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
+  /** Base URL of your Jamwidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** Theme preset. Defaults to inheriting the host page. */
   theme?: "inherit" | "light" | "dark" | "auto";
@@ -109,8 +109,8 @@ import Theme from "./Theme.astro";
 
     const visitorId = getVisitorId();
     const headers = {
-      "X-JamWidgets-Key": siteKey,
-      "X-JamWidgets-Visitor": visitorId,
+      "X-Jamwidgets-Key": siteKey,
+      "X-Jamwidgets-Visitor": visitorId,
     };
 
     const loadingEl = container.querySelector(".jamwidgets-poll-loading") as HTMLElement;

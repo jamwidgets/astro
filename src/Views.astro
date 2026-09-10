@@ -1,6 +1,6 @@
 ---
 /**
- * JamWidgets Views Component
+ * Jamwidgets Views Component
  *
  * Tracks page views and displays view count.
  * Automatically records a view when the page loads.
@@ -17,7 +17,7 @@ interface Props {
   siteKey: string;
   /** Unique identifier for this page (e.g., slug or URL path) */
   pageId: string;
-  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
+  /** Base URL of your Jamwidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** Show unique visitor count alongside total views (default: false) */
   showUnique?: boolean;
@@ -86,8 +86,8 @@ import Theme from "./Theme.astro";
 
     const visitorId = getVisitorId();
     const headers = {
-      "X-JamWidgets-Key": siteKey,
-      "X-JamWidgets-Visitor": visitorId,
+      "X-Jamwidgets-Key": siteKey,
+      "X-Jamwidgets-Visitor": visitorId,
     };
 
     const countEl = container.querySelector(".jamwidgets-views-count");

@@ -1,8 +1,8 @@
 ---
 /**
- * JamWidgets Form Component
+ * Jamwidgets Form Component
  *
- * A wrapper component that handles form submission to JamWidgets.
+ * A wrapper component that handles form submission to Jamwidgets.
  * You provide your own form fields via the default slot.
  *
  * @example
@@ -17,9 +17,9 @@
 interface Props {
   /** Your site key (required) */
   siteKey: string;
-  /** The form slug as configured in JamWidgets (required) */
+  /** The form slug as configured in Jamwidgets (required) */
   formSlug: string;
-  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
+  /** Base URL of your Jamwidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** Theme preset. Defaults to inheriting the host page. */
   theme?: "inherit" | "light" | "dark" | "auto";
@@ -101,7 +101,7 @@ import Theme from "./Theme.astro";
         if (!siteKey) {
           missing.push("siteKey (check JAMWIDGETS_SITE_KEY in your .env)");
         }
-        console.error(`JamWidgets form missing required props: ${missing.join(", ")}`);
+        console.error(`Jamwidgets form missing required props: ${missing.join(", ")}`);
         return;
       }
 
@@ -138,8 +138,8 @@ import Theme from "./Theme.astro";
           headers: {
             ...getAttributionHeaders(),
             "Content-Type": "application/json",
-            "X-JamWidgets-Key": siteKey,
-            "X-JamWidgets-Visitor": getVisitorId(),
+            "X-Jamwidgets-Key": siteKey,
+            "X-Jamwidgets-Visitor": getVisitorId(),
           },
           body: JSON.stringify(data),
         });

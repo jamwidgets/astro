@@ -3,7 +3,7 @@
 > **Note:** This repo is a read-only mirror. Source lives in a private monorepo.
 > For issues/PRs, please open them here and we'll sync changes back.
 
-Astro components and content loader for [JamWidgets](https://jamwidgets.com) - widgets for static sites.
+Astro components and content loader for [Jamwidgets](https://jamwidgets.com) - widgets for static sites.
 
 ## Installation
 
@@ -13,7 +13,7 @@ npm install @jamwidgets/astro
 
 ## Setup
 
-Add your JamWidgets site key to your `.env`:
+Add your Jamwidgets site key to your `.env`:
 
 ```
 JAMWIDGETS_SITE_KEY=your_site_key_here
@@ -22,7 +22,7 @@ SITE_URL=https://example.com
 
 ## Content Loader (Posts)
 
-Fetch posts from JamWidgets at build time using Astro's content collections:
+Fetch posts from Jamwidgets at build time using Astro's content collections:
 
 ```ts
 // src/content.config.ts
@@ -39,7 +39,7 @@ const posts = defineCollection({
 export const collections = { posts };
 ```
 
-Set `origin` to an allowed origin for production builds. JamWidgets rejects the
+Set `origin` to an allowed origin for production builds. Jamwidgets rejects the
 request when the site restricts origins and the loader omits it.
 
 Then use in your pages:
@@ -62,7 +62,7 @@ const posts = await getCollection("posts");
 
 ```ts
 jamwidgetsPostsLoader({
-  siteKey: string;        // Required - your JamWidgets site key
+  siteKey: string;        // Required - your Jamwidgets site key
   endpoint?: string;      // Default: 'https://jamwidgets.com'
   origin?: string;        // Site URL used for allowed-origin validation
   tag?: string;           // Filter posts by tag
@@ -91,8 +91,8 @@ import Form from "@jamwidgets/astro/Form";
 ```
 
 **Props:**
-- `siteKey` (required) - Your JamWidgets site key
-- `formSlug` (required) - The form slug as configured in JamWidgets
+- `siteKey` (required) - Your Jamwidgets site key
+- `formSlug` (required) - The form slug as configured in Jamwidgets
 - `endpoint` - Base URL (default: `https://jamwidgets.com`)
 - `theme` - `'light'` | `'dark'` | `'auto'` (default: `'light'`)
 - `class` - Additional CSS class
@@ -118,7 +118,7 @@ import Comments from "@jamwidgets/astro/Comments";
 ```
 
 **Props:**
-- `siteKey` (required) - Your JamWidgets site key
+- `siteKey` (required) - Your Jamwidgets site key
 - `pageId` (required) - Unique page identifier (e.g., URL path)
 - `endpoint` - Base URL (default: `https://jamwidgets.com`)
 - `theme` - `'light'` | `'dark'` | `'auto'` (default: `'light'`)
@@ -144,7 +144,7 @@ import Reactions from "@jamwidgets/astro/Reactions";
 ```
 
 **Props:**
-- `siteKey` (required) - Your JamWidgets site key
+- `siteKey` (required) - Your Jamwidgets site key
 - `pageId` (required) - Unique page identifier
 - `reactions` - Array of reaction types (default: `['like']`)
 - `icons` - Custom icons: `{ like: '👍', love: '❤️' }`
@@ -175,7 +175,7 @@ import Subscribe from "@jamwidgets/astro/Subscribe";
 ```
 
 **Props:**
-- `siteKey` (required) - Your JamWidgets site key
+- `siteKey` (required) - Your Jamwidgets site key
 - `endpoint` - Base URL (default: `https://jamwidgets.com`)
 - `buttonText` - Submit button text (default: `'Subscribe'`)
 - `placeholder` - Email input placeholder

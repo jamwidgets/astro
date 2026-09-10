@@ -1,6 +1,6 @@
 ---
 /**
- * JamWidgets Reactions Component
+ * Jamwidgets Reactions Component
  *
  * Displays reaction buttons (like, clap, etc.) for a page.
  * Customize with CSS custom properties.
@@ -18,7 +18,7 @@ interface Props {
   siteKey: string;
   /** Unique identifier for this page (e.g., slug or URL path) */
   pageId: string;
-  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
+  /** Base URL of your Jamwidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** Reaction types to show (default: ['like']) */
   reactions?: string[];
@@ -102,8 +102,8 @@ import Theme from "./Theme.astro";
     const visitorId = getVisitorId();
     const headers = {
       ...getAttributionHeaders(pageId),
-      "X-JamWidgets-Key": siteKey,
-      "X-JamWidgets-Visitor": visitorId,
+      "X-Jamwidgets-Key": siteKey,
+      "X-Jamwidgets-Visitor": visitorId,
     };
 
     // Track which reactions the user has made (stored in localStorage)

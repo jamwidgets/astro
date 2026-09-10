@@ -1,6 +1,6 @@
 ---
 /**
- * JamWidgets Comments Component
+ * Jamwidgets Comments Component
  *
  * Displays threaded comments with a form to post new comments and replies.
  * Customize with CSS custom properties.
@@ -14,7 +14,7 @@ interface Props {
   siteKey: string;
   /** Unique identifier for this page (e.g., slug or URL path) */
   pageId: string;
-  /** Base URL of your JamWidgets instance (default: 'https://jamwidgets.com') */
+  /** Base URL of your Jamwidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
   /** Theme preset. Defaults to inheriting the host page. */
   theme?: "inherit" | "light" | "dark" | "auto";
@@ -124,8 +124,8 @@ import Theme from "./Theme.astro";
     const visitorId = getVisitorId();
     const headers = {
       ...getAttributionHeaders(pageId),
-      "X-JamWidgets-Key": siteKey,
-      "X-JamWidgets-Visitor": visitorId,
+      "X-Jamwidgets-Key": siteKey,
+      "X-Jamwidgets-Visitor": visitorId,
     };
 
     // Record when form was loaded (for time-based spam detection)
