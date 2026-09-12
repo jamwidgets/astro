@@ -58,6 +58,49 @@ const posts = await getCollection("posts");
 ))}
 ```
 
+Render a post's Markdown body with Astro's content component:
+
+```astro
+---
+import { getEntry, render } from "astro:content";
+import { Image } from "astro:assets";
+const post = await getEntry("posts", "hello-world");
+if (!post) throw new Error("Post not found");
+const { Content } = await render(post);
+---
+
+{post.data.coverImage && (
+  <Image
+    src={post.data.coverImage}
+    inferSize
+    layout="full-width"
+    alt={post.data.title}
+  />
+)}
+<article><Content /></article>
+```
+
+`post.data.content` is Markdown, not an HTML string. Do not render it with
+`set:html`; use Astro's `render()` and `<Content />` as above.
+
+For responsive uploaded images, authorize Jamwidgets' asset host in your Astro
+config. Astro will then generate correctly sized image variants for Markdown
+images. The hostname below is for Jamwidgets Cloud; self-hosted deployments use
+the hostname configured by `ASSET_BASE_URL` (or fall back to
+`<AWS_S3_BUCKET>.s3.<AWS_S3_REGION>.amazonaws.com`):
+
+```js
+import { defineConfig } from "astro/config";
+
+export default defineConfig({
+  image: {
+    domains: ["assets.jamwidgets.com"],
+    layout: "constrained",
+    responsiveStyles: true,
+  },
+});
+```
+
 ### Loader Options
 
 ```ts

@@ -78,7 +78,7 @@ export function jamwidgetsPostsLoader(options: JamwidgetsPostsLoaderOptions): Lo
     name: "jamwidgets-posts-loader",
 
     async load(context: LoaderContext) {
-      const { store, logger } = context;
+      const { store, logger, renderMarkdown } = context;
 
       try {
         const url = new URL(`${baseUrl}/posts`);
@@ -106,13 +106,18 @@ export function jamwidgetsPostsLoader(options: JamwidgetsPostsLoaderOptions): Lo
 
         const data: ApiResponse = await response.json();
 
-        store.clear();
-
-        for (const post of data.posts) {
-          store.set({
+        const entries = await Promise.all(
+          data.posts.map(async (post) => ({
             id: post.slug,
             data: { ...post },
-          });
+            body: post.content,
+            rendered: await renderMarkdown(post.content),
+          })),
+        );
+
+        store.clear();
+        for (const entry of entries) {
+          store.set(entry);
         }
 
         logger.info(`Loaded ${data.posts.length} posts from Jamwidgets`);
