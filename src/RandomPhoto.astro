@@ -1,0 +1,8 @@
+---
+interface Props { siteKey: string; slug: string; endpoint?: string; tag?: string; seed?: string }
+const { siteKey, slug, endpoint, tag, seed } = Astro.props;
+---
+<jamwidgets-random-photo site-key={siteKey} slug={slug} endpoint={endpoint} tag={tag} seed={seed} />
+<script>
+  import "@jamwidgets/core/gallery-elements";
+</script>

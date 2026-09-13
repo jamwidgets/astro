@@ -1,0 +1,8 @@
+---
+interface Props { siteKey: string; endpoint?: string; deepLink?: boolean }
+const { siteKey, endpoint, deepLink = false } = Astro.props;
+---
+<jamwidgets-gallery-index site-key={siteKey} endpoint={endpoint} deep-link={deepLink ? "" : undefined} />
+<script>
+  import "@jamwidgets/core/gallery-elements";
+</script>

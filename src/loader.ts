@@ -27,6 +27,10 @@ import {
   type SeriphPost, // deprecated alias
   type FetchPostsOptions,
   type FetchPostOptions,
+  fetchGalleries as coreFetchGalleries,
+  fetchGallery as coreFetchGallery,
+  type JamwidgetsGallery,
+  type GallerySummary,
 } from "@jamwidgets/core";
 import type { Loader, LoaderContext } from "astro/loaders";
 
@@ -137,3 +141,49 @@ export function jamwidgetsPostsLoader(options: JamwidgetsPostsLoaderOptions): Lo
 
 /** @deprecated Use jamwidgetsPostsLoader instead */
 export const seriphPostsLoader = jamwidgetsPostsLoader;
+
+export interface JamwidgetsGalleriesLoaderOptions {
+  siteKey: string;
+  endpoint?: string;
+  origin?: string;
+  onError?: "throw" | "warn" | "ignore";
+}
+
+export function jamwidgetsGalleriesLoader(options: JamwidgetsGalleriesLoaderOptions): Loader {
+  const { endpoint = DEFAULT_ENDPOINT, origin, onError = "throw" } = options;
+  const siteKey = getSiteKey({ siteKey: options.siteKey });
+  return {
+    name: "jamwidgets-galleries-loader",
+    async load({ store, logger }: LoaderContext) {
+      try {
+        const summaries: GallerySummary[] = [];
+        let after: string | undefined;
+        do {
+          const page = await coreFetchGalleries({
+            siteKey,
+            endpoint,
+            origin,
+            limit: 100,
+            after,
+          });
+          summaries.push(...page.galleries);
+          after = page.nextCursor;
+        } while (after);
+        const galleries: Array<JamwidgetsGallery | null> = [];
+        for (const summary of summaries) {
+          galleries.push(
+            await coreFetchGallery({ siteKey, endpoint, origin, slug: summary.slug }),
+          );
+        }
+        const entries = galleries.filter((gallery): gallery is JamwidgetsGallery => gallery !== null);
+        store.clear();
+        for (const gallery of entries) store.set({ id: gallery.slug, data: { ...gallery } });
+        logger.info(`Loaded ${entries.length} galleries from Jamwidgets at build time`);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (onError === "throw") throw error;
+        if (onError === "warn") logger.warn(`Error loading galleries: ${message}`);
+      }
+    },
+  };
+}

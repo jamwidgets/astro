@@ -11,6 +11,18 @@ Astro components and content loader for [Jamwidgets](https://jamwidgets.com) - w
 npm install @jamwidgets/astro
 ```
 
+## Galleries
+
+```astro
+---
+import GalleryIndex from "@jamwidgets/astro/GalleryIndex";
+import Gallery from "@jamwidgets/astro/Gallery";
+---
+
+<GalleryIndex siteKey="your-key" deepLink />
+<Gallery siteKey="your-key" slug="field-notes" tag="portraits" />
+```
+
 ## Setup
 
 Add your Jamwidgets site key to your `.env`:

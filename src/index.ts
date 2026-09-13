@@ -20,6 +20,9 @@ export {
   type FormSubmitResponse,
   type SubscribeResponse,
   type JamwidgetsPost,
+  type JamwidgetsGallery,
+  type GalleryPhoto,
+  type GallerySummary,
   type SeriphPost, // deprecated alias
   type Announcement,
   type AnnouncementType,
@@ -94,6 +97,12 @@ export {
   fetchPosts,
   type FetchPostOptions,
   fetchPost,
+  type FetchGalleriesOptions,
+  fetchGalleries,
+  type FetchGalleryOptions,
+  fetchGallery,
+  type FetchRandomPhotoOptions,
+  fetchRandomPhoto,
 
   // Site config + powered-by attribution
   type SiteConfig,
@@ -130,4 +139,6 @@ export {
   seriphPostsLoader, // deprecated alias
   type JamwidgetsPostsLoaderOptions,
   type SeriphPostsLoaderOptions, // deprecated alias
+  jamwidgetsGalleriesLoader,
+  type JamwidgetsGalleriesLoaderOptions,
 } from "./loader.js";

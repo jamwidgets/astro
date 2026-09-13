@@ -1,0 +1,8 @@
+---
+interface Props { siteKey: string; slug: string; endpoint?: string; tag?: string }
+const { siteKey, slug, endpoint, tag } = Astro.props;
+---
+<jamwidgets-gallery site-key={siteKey} slug={slug} endpoint={endpoint} tag={tag} />
+<script>
+  import "@jamwidgets/core/gallery-elements";
+</script>
