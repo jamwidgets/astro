@@ -172,11 +172,13 @@ import Theme from "./Theme.astro";
           const inputType = poll!.settings.multiSelect ? "checkbox" : "radio";
           optionEl.innerHTML = `
             <label class="jamwidgets-poll-label ${isSelected ? "jamwidgets-selected" : ""}">
-              <input type="${inputType}" name="poll-${poll!.id}" value="${option.id}" ${isSelected ? "checked" : ""} />
-              <span class="jamwidgets-poll-text">${option.text}</span>
+              <input type="${inputType}" ${isSelected ? "checked" : ""} />
+              <span class="jamwidgets-poll-text"></span>
             </label>
           `;
           const input = optionEl.querySelector("input")!;
+          input.name = `poll-${poll!.id}`;
+          input.value = option.id;
           input.addEventListener("change", () => {
             if (poll!.settings.multiSelect) {
               if (input.checked) {
@@ -199,7 +201,7 @@ import Theme from "./Theme.astro";
           optionEl.innerHTML = `
             <div class="jamwidgets-poll-result ${isSelected ? "jamwidgets-voted" : ""}">
               <div class="jamwidgets-poll-bar" style="width: ${percent}%"></div>
-              <span class="jamwidgets-poll-text">${option.text}</span>
+              <span class="jamwidgets-poll-text"></span>
               <span class="jamwidgets-poll-percent">${percent}%</span>
             </div>
           `;
@@ -207,10 +209,11 @@ import Theme from "./Theme.astro";
           // Show without results (voted but results hidden)
           optionEl.innerHTML = `
             <div class="jamwidgets-poll-result jamwidgets-no-results ${isSelected ? "jamwidgets-voted" : ""}">
-              <span class="jamwidgets-poll-text">${option.text}</span>
+              <span class="jamwidgets-poll-text"></span>
             </div>
           `;
         }
+        optionEl.querySelector(".jamwidgets-poll-text")!.textContent = option.text;
         optionsEl.appendChild(optionEl);
       });
 

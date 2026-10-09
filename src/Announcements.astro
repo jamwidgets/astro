@@ -89,6 +89,16 @@ import Theme from "./Theme.astro";
       }
     }
 
+    function safeLinkUrl(value?: string): string | null {
+      if (!value) return null;
+      try {
+        const url = new URL(value, window.location.href);
+        return url.protocol === "http:" || url.protocol === "https:" ? url.href : null;
+      } catch {
+        return null;
+      }
+    }
+
     function renderAnnouncements(announcements: Announcement[]) {
       container.innerHTML = "";
 
@@ -97,24 +107,30 @@ import Theme from "./Theme.astro";
         el.className = `jamwidgets-announcement jamwidgets-announcement-${announcement.announcementType}`;
         el.dataset.announcementId = announcement.id;
 
-        let content = `<span class="jamwidgets-announcement-content">${announcement.content}</span>`;
+        const contentEl = document.createElement("span");
+        contentEl.className = "jamwidgets-announcement-content";
+        contentEl.textContent = announcement.content;
+        el.append(contentEl);
 
-        if (announcement.linkUrl) {
-          content += ` <a href="${announcement.linkUrl}" class="jamwidgets-announcement-link">${announcement.linkText || "Learn more"}</a>`;
+        const linkUrl = safeLinkUrl(announcement.linkUrl);
+        if (linkUrl) {
+          const link = document.createElement("a");
+          link.className = "jamwidgets-announcement-link";
+          link.href = linkUrl;
+          link.textContent = announcement.linkText || "Learn more";
+          el.append(" ", link);
         }
 
         if (announcement.isDismissible) {
-          content += `
+          el.insertAdjacentHTML("beforeend", `
             <button type="button" class="jamwidgets-announcement-dismiss" aria-label="Dismiss">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
-          `;
+          `);
         }
-
-        el.innerHTML = content;
 
         // Handle dismiss
         const dismissBtn = el.querySelector(".jamwidgets-announcement-dismiss");
