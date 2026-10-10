@@ -65,16 +65,7 @@ import Theme from "./Theme.astro";
 </div>
 
 <script>
-  // Get or create a visitor ID for anonymous users
-  const VISITOR_KEY = "jamwidgets_visitor_id";
-  function getVisitorId(): string {
-    let id = localStorage.getItem(VISITOR_KEY);
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem(VISITOR_KEY, id);
-    }
-    return id;
-  }
+  import { getVisitorId } from "@jamwidgets/core";
 
   document.querySelectorAll("[data-jamwidgets-views]").forEach((container) => {
     const endpoint = (container as HTMLElement).dataset.endpoint;

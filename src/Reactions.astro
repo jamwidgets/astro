@@ -106,11 +106,14 @@ import Theme from "./Theme.astro";
       "X-Jamwidgets-Visitor": visitorId,
     };
 
-    // Track which reactions the user has made (stored in localStorage)
     const storageKey = `jamwidgets-reactions-${pageId}`;
-    const userReactions = new Set<string>(
-      JSON.parse(localStorage.getItem(storageKey) || "[]")
-    );
+    const userReactions = new Set<string>();
+    try {
+      const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      if (Array.isArray(stored)) {
+        for (const type of stored) if (typeof type === "string") userReactions.add(type);
+      }
+    } catch {}
 
     // Apply initial "reacted" state
     container.querySelectorAll(".jamwidgets-reaction-btn").forEach((btn) => {
@@ -134,7 +137,7 @@ import Theme from "./Theme.astro";
 
         // Sync with server's user reactions
         serverUserReactions.forEach((type: string) => userReactions.add(type));
-        localStorage.setItem(storageKey, JSON.stringify([...userReactions]));
+        try { localStorage.setItem(storageKey, JSON.stringify([...userReactions])); } catch {}
 
         container.querySelectorAll(".jamwidgets-reaction-btn").forEach((btn) => {
           const type = (btn as HTMLElement).dataset.reactionType;
@@ -204,7 +207,7 @@ import Theme from "./Theme.astro";
               }),
             );
           }
-          localStorage.setItem(storageKey, JSON.stringify([...userReactions]));
+          try { localStorage.setItem(storageKey, JSON.stringify([...userReactions])); } catch {}
         } catch (e) {
           console.error(isReacted ? "Failed to remove reaction:" : "Failed to add reaction:", e);
         } finally {
