@@ -71,7 +71,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 </form>
 
 <script>
-  import { getAttributionHeaders, getVisitorId } from "@jamwidgets/core";
+  import { apiError, getAttributionHeaders, getVisitorId } from "@jamwidgets/core";
 
   interface SubscribeResponse {
     success: boolean;
@@ -114,8 +114,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText || "Subscription failed");
+          throw await apiError(response, "Subscription failed");
         }
 
         const result: SubscribeResponse = await response.json();

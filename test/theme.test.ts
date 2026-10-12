@@ -36,6 +36,27 @@ describe("widget theme contract", () => {
     }
   });
 
+  it("ranks the widget layer above Tailwind's base whichever CSS loads first", async () => {
+    // A layer's rank is fixed where it is first named. Without this statement,
+    // widget CSS bundled before a Tailwind v4 site's global CSS would put the
+    // jamwidgets layer below `base`, and Preflight would reset the widgets.
+    const order = "@layer theme, base, components, utilities, jamwidgets;";
+    for (const component of [...COMPONENTS, "Theme"]) {
+      const text = await source(component);
+      const declared = text.indexOf(order);
+      expect(declared, component).toBeGreaterThan(-1);
+      expect(declared, component).toBeLessThan(text.indexOf("@layer jamwidgets {"));
+    }
+  });
+
+  it("names every email input for assistive technology", async () => {
+    for (const component of ["Subscribe", "Waitlist"]) {
+      const text = await source(component);
+      expect(text, component).toContain('label = "Email address"');
+      expect(text, component).toContain("aria-label={label}");
+    }
+  });
+
   it("inherits host styling unless a preset is requested", async () => {
     for (const component of COMPONENTS) {
       expect(await source(component), component).toContain('theme = "inherit"');
@@ -81,7 +102,7 @@ describe("widget moderation protocol", () => {
     expect(form).toContain("data._seriph_ts = loadTimestamp");
     expect(form).toContain("data._seriph_id = requestIds.get(formEl)");
     expect(form).toContain("requestBodies.get(formEl) !== comparableBody");
-    expect(form).toContain("import { generateUUID,");
+    expect(form).toMatch(/import \{[^}]*\bgenerateUUID\b[^}]*\} from "@jamwidgets\/core"/);
     expect(form).not.toContain("crypto.randomUUID");
     expect(comments).toContain("_seriph_ts: loadTimestamp");
     expect(form).not.toContain("_jamwidgets_ts");

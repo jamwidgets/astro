@@ -26,6 +26,8 @@ interface Props {
   buttonText?: string;
   /** Email input placeholder (default: 'your@email.com') */
   placeholder?: string;
+  /** Accessible name for the email input (default: 'Email address') */
+  label?: string;
   /** Success message override (default: uses server response) */
   successMessage?: string;
   /** Theme preset. Defaults to inheriting the host page. */
@@ -42,6 +44,7 @@ const {
   endpoint = DEFAULT_ENDPOINT,
   buttonText = "Subscribe",
   placeholder = "your@email.com",
+  label = "Email address",
   successMessage,
   theme = "inherit",
   class: className = "",
@@ -68,6 +71,7 @@ import Theme from "./Theme.astro";
       name="email"
       required
       placeholder={placeholder}
+      aria-label={label}
       class="jamwidgets-subscribe-input"
       autocomplete="email"
     />
@@ -93,7 +97,7 @@ import Theme from "./Theme.astro";
     message: string;
   }
 
-  import { getVisitorId } from "@jamwidgets/core";
+  import { apiError, getVisitorId } from "@jamwidgets/core";
 
   document.querySelectorAll("[data-jamwidgets-subscribe]").forEach((form) => {
     form.addEventListener("submit", async (e) => {
@@ -141,8 +145,7 @@ import Theme from "./Theme.astro";
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText || "Subscription failed");
+          throw await apiError(response, "Subscription failed");
         }
 
         const result: SubscribeResponse = await response.json();
@@ -190,6 +193,7 @@ import Theme from "./Theme.astro";
 </script>
 
 <style is:global>
+  @layer theme, base, components, utilities, jamwidgets;
   @layer jamwidgets {
   .jamwidgets-subscribe {
     position: relative;

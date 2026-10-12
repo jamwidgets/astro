@@ -1,4 +1,11 @@
 <style is:global>
+  /* Whichever stylesheet names a layer first fixes its order. If these widget
+     styles load before a Tailwind site's CSS, `jamwidgets` would otherwise
+     become the lowest layer and Tailwind's base reset would strip widget
+     input borders. Naming Tailwind's layers first, and `jamwidgets` last,
+     gives the same order whichever CSS loads first. Every widget repeats
+     this statement; unlayered site CSS still wins. */
+  @layer theme, base, components, utilities, jamwidgets;
   @layer jamwidgets {
     :where(
       .jamwidgets-announcements,

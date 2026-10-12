@@ -234,6 +234,7 @@ import Subscribe from "@jamwidgets/astro/Subscribe";
 - `endpoint` - Base URL (default: `https://jamwidgets.com`)
 - `buttonText` - Submit button text (default: `'Subscribe'`)
 - `placeholder` - Email input placeholder
+- `label` - Accessible name for the email input (default: `'Email address'`)
 - `successMessage` - Custom success message
 - `theme` - `'light'` | `'dark'` | `'auto'` (default: `'light'`)
 - `class` - Additional CSS class
@@ -316,6 +317,10 @@ Set semantic CSS custom properties on a wrapper or the widget itself to match yo
 ```
 
 Status colors can be customized with `--jamwidgets-color-success`, `--jamwidgets-color-error`, and `--jamwidgets-color-notice`. Components adapt to their container width, so subscribe, waitlist, comments, and feedback controls stack when embedded in a narrow column.
+
+### Cascade layers and Tailwind
+
+Widget styles live in a `jamwidgets` cascade layer. Every component declares the order `@layer theme, base, components, utilities, jamwidgets;` before its rules, so the widgets rank above Tailwind v4's layers (including Preflight in `base`) whichever stylesheet the browser sees first. Your unlayered CSS still overrides the widgets. If your site declares its own layer order, keep `jamwidgets` after `base` or Preflight will reset the widgets' padding, borders and buttons.
 
 ## License
 

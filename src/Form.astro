@@ -67,7 +67,7 @@ import Theme from "./Theme.astro";
 </form>
 
 <script>
-  import { generateUUID, getAttributionHeaders, getVisitorId } from "@jamwidgets/core";
+  import { apiError, generateUUID, getAttributionHeaders, getVisitorId } from "@jamwidgets/core";
 
   interface FormSubmitResponse {
     success: boolean;
@@ -145,8 +145,7 @@ import Theme from "./Theme.astro";
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText || "Submission failed");
+          throw await apiError(response, "Submission failed");
         }
 
         const result: FormSubmitResponse = await response.json();
@@ -193,6 +192,7 @@ import Theme from "./Theme.astro";
 </script>
 
 <style is:global>
+  @layer theme, base, components, utilities, jamwidgets;
   @layer jamwidgets {
     .jamwidgets-form-message {
       margin-top: 1rem;

@@ -64,7 +64,7 @@ import Theme from "./Theme.astro";
     userVotes?: string[];
   }
 
-  import { getVisitorId } from "@jamwidgets/core";
+  import { apiError, getVisitorId } from "@jamwidgets/core";
 
   class JamwidgetsEmbed extends HTMLElement {
     connectedCallback() {
@@ -271,8 +271,7 @@ import Theme from "./Theme.astro";
           });
 
           if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || "Failed to vote");
+            throw await apiError(response, "Failed to vote");
           }
 
           const data = await response.json();
@@ -312,6 +311,7 @@ import Theme from "./Theme.astro";
 </script>
 
 <style is:global>
+  @layer theme, base, components, utilities, jamwidgets;
   @layer jamwidgets {
     .jamwidgets-poll {
       font-family: inherit;
