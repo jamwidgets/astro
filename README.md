@@ -257,6 +257,10 @@ import SubscribeForm from "@jamwidgets/astro/SubscribeForm";
 </SubscribeForm>
 ```
 
+### Missing content
+
+`Poll`, `Embed` polls, `Gallery` and `RandomPhoto` render nothing when their slug doesn't exist or isn't published, and log a `console.warn` naming it. Create or publish the content in the Jamwidgets dashboard and it appears on the next page load. Other failures still show a short error.
+
 ## JavaScript API
 
 For advanced use cases, use the JavaScript API directly:

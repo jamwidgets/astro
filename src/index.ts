@@ -104,6 +104,11 @@ export {
   type FetchRandomPhotoOptions,
   fetchRandomPhoto,
 
+  // Errors
+  JamwidgetsApiError,
+  apiError,
+  isNotFound,
+
   // Site config + powered-by attribution
   type SiteConfig,
   fetchSiteConfig,

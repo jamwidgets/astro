@@ -64,7 +64,7 @@ import Theme from "./Theme.astro";
     userVotes?: string[];
   }
 
-  import { apiError, getVisitorId } from "@jamwidgets/core";
+  import { apiError, getVisitorId, warnMissingContent } from "@jamwidgets/core";
 
   class JamwidgetsEmbed extends HTMLElement {
     connectedCallback() {
@@ -134,8 +134,14 @@ import Theme from "./Theme.astro";
 
       async function loadPoll() {
         try {
-          const response = await fetch(`${config.endpoint}/polls/${config.slug}`, { headers });
-          if (!response.ok) throw new Error("Failed to load poll");
+          const response = await fetch(`${config.endpoint}/polls/${encodeURIComponent(config.slug)}`, { headers });
+          if (response.status === 404) {
+            // Missing or unpublished poll: show readers nothing.
+            container.style.display = "none";
+            warnMissingContent("Embedded poll", config.slug);
+            return;
+          }
+          if (!response.ok) throw await apiError(response, "Failed to load poll");
           const data = await response.json();
           poll = data.poll_with_results;
           renderPoll();
