@@ -37,12 +37,19 @@ describe("widget API contract", () => {
   });
 
   it("leaves widget requests to core", async () => {
-    const widgets = [
-      "Announcements", "Comments", "Feedback", "Form", "PoweredBy",
-      "Reactions", "Subscribe", "SubscribeForm", "Views", "Waitlist",
-    ];
+    const widgets = (await readdir(new URL("../src/", import.meta.url))).filter((name) => name.endsWith(".astro"));
     for (const widget of widgets) {
-      expect(await source(`${widget}.astro`), widget).not.toMatch(/\bfetch\(/);
+      expect(await source(widget), widget).not.toMatch(/\bfetch\(/);
+    }
+    // The shared poll view only calls the core controller's fetch method.
+    expect(await source("poll-view.ts")).not.toMatch(/(?<!\.)\bfetch\(/);
+  });
+
+  it("Poll and Embed share one poll implementation", async () => {
+    for (const widget of ["Poll.astro", "Embed.astro"]) {
+      const text = await source(widget);
+      expect(text, widget).toContain("POLL_MARKUP");
+      expect(text, widget).not.toContain("function renderPoll");
     }
   });
 

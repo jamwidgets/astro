@@ -26,7 +26,6 @@ interface Props {
 }
 
 const DEFAULT_ENDPOINT = "https://jamwidgets.com";
-const API_PATH = "/api/v1";
 
 const {
   siteKey,
@@ -36,264 +35,31 @@ const {
   class: className = "",
 } = Astro.props;
 
-// Build the API URL
-const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
-
 import PoweredBy from "./PoweredBy.astro";
 import Theme from "./Theme.astro";
+import { POLL_MARKUP } from "./poll-view";
 ---
 
 <Theme />
 <div
   class:list={["jamwidgets-poll", `jamwidgets-theme-${theme}`, className]}
   data-jamwidgets-poll
-  data-endpoint={baseUrl}
+  data-endpoint={endpoint}
   data-site-key={siteKey}
   data-poll-slug={slug}
 >
-  <div class="jamwidgets-poll-loading">
-    <span class="jamwidgets-poll-spinner"></span>
-  </div>
-  <div class="jamwidgets-poll-content" style="display: none;">
-    <h3 class="jamwidgets-poll-question"></h3>
-    <div class="jamwidgets-poll-options"></div>
-    <div class="jamwidgets-poll-footer">
-      <span class="jamwidgets-poll-total"></span>
-      <span class="jamwidgets-poll-status"></span>
-    </div>
-    <button type="button" class="jamwidgets-poll-submit" style="display: none;">Vote</button>
-  </div>
-  <div class="jamwidgets-poll-error" style="display: none;"></div>
+  <Fragment set:html={POLL_MARKUP} />
 
   <PoweredBy siteKey={siteKey} endpoint={endpoint} />
 </div>
 
 <script>
-  interface PollOption {
-    id: string;
-    text: string;
-  }
+  import { mountPoll } from "./poll-view";
 
-  interface PollWithResults {
-    id: string;
-    question: string;
-    options: PollOption[];
-    settings: {
-      multiSelect: boolean;
-      showResults: "always" | "afterVote" | "afterEnd" | "never";
-    };
-    endsAt?: string;
-    isActive: boolean;
-    results: Record<string, number>;
-    totalVotes: number;
-    userVotes?: string[];
-  }
-
-  import { apiError, getVisitorId, warnMissingContent } from "@jamwidgets/core";
-
-  document.querySelectorAll("[data-jamwidgets-poll]").forEach((container) => {
-    const endpoint = (container as HTMLElement).dataset.endpoint;
-    const siteKey = (container as HTMLElement).dataset.siteKey;
-    const pollSlug = (container as HTMLElement).dataset.pollSlug;
-
+  document.querySelectorAll<HTMLElement>("[data-jamwidgets-poll]").forEach((container) => {
+    const { endpoint, siteKey, pollSlug } = container.dataset;
     if (!endpoint || !siteKey || !pollSlug) return;
-
-    const visitorId = getVisitorId();
-    const headers = {
-      "X-Jamwidgets-Key": siteKey,
-      "X-Jamwidgets-Visitor": visitorId,
-    };
-
-    const loadingEl = container.querySelector(".jamwidgets-poll-loading") as HTMLElement;
-    const contentEl = container.querySelector(".jamwidgets-poll-content") as HTMLElement;
-    const errorEl = container.querySelector(".jamwidgets-poll-error") as HTMLElement;
-    const questionEl = container.querySelector(".jamwidgets-poll-question") as HTMLElement;
-    const optionsEl = container.querySelector(".jamwidgets-poll-options") as HTMLElement;
-    const totalEl = container.querySelector(".jamwidgets-poll-total") as HTMLElement;
-    const statusEl = container.querySelector(".jamwidgets-poll-status") as HTMLElement;
-    const submitBtn = container.querySelector(".jamwidgets-poll-submit") as HTMLButtonElement;
-
-    let poll: PollWithResults | null = null;
-    let selectedOptions: Set<string> = new Set();
-
-    async function loadPoll() {
-      try {
-        const response = await fetch(`${endpoint}/polls/${encodeURIComponent(pollSlug!)}`, { headers });
-        if (response.status === 404) {
-          // Missing or unpublished poll: show visitors nothing.
-          (container as HTMLElement).style.display = "none";
-          warnMissingContent("Poll", pollSlug!);
-          return;
-        }
-        if (!response.ok) throw await apiError(response, "Failed to load poll");
-        const data = await response.json();
-        poll = data.poll_with_results;
-        renderPoll();
-      } catch (e) {
-        console.error("Failed to load poll:", e);
-        loadingEl.style.display = "none";
-        errorEl.style.display = "block";
-        errorEl.textContent = "Failed to load poll";
-      }
-    }
-
-    function renderPoll() {
-      if (!poll) return;
-
-      loadingEl.style.display = "none";
-      contentEl.style.display = "block";
-
-      questionEl.textContent = poll.question;
-
-      const hasVoted = poll.userVotes && poll.userVotes.length > 0;
-      const isEnded = poll.endsAt ? new Date(poll.endsAt) < new Date() : false;
-      const canVote = poll.isActive && !isEnded && !hasVoted;
-      const showResults = Object.keys(poll.results).length > 0;
-
-      // Pre-select user's votes if any
-      if (poll.userVotes) {
-        selectedOptions = new Set(poll.userVotes);
-      }
-
-      optionsEl.innerHTML = "";
-      poll.options.forEach((option) => {
-        const optionEl = document.createElement("div");
-        optionEl.className = "jamwidgets-poll-option";
-
-        const votes = poll!.results[option.id] || 0;
-        const percent = poll!.totalVotes > 0 ? Math.round((votes / poll!.totalVotes) * 100) : 0;
-        const isSelected = selectedOptions.has(option.id);
-
-        if (canVote) {
-          // Interactive option
-          const inputType = poll!.settings.multiSelect ? "checkbox" : "radio";
-          optionEl.innerHTML = `
-            <label class="jamwidgets-poll-label ${isSelected ? "jamwidgets-selected" : ""}">
-              <input type="${inputType}" ${isSelected ? "checked" : ""} />
-              <span class="jamwidgets-poll-text"></span>
-            </label>
-          `;
-          const input = optionEl.querySelector("input")!;
-          input.name = `poll-${poll!.id}`;
-          input.value = option.id;
-          input.addEventListener("change", () => {
-            if (poll!.settings.multiSelect) {
-              if (input.checked) {
-                selectedOptions.add(option.id);
-              } else {
-                selectedOptions.delete(option.id);
-              }
-            } else {
-              selectedOptions = new Set([option.id]);
-            }
-            updateSubmitButton();
-            // Update visual selection
-            optionsEl.querySelectorAll(".jamwidgets-poll-label").forEach((label) => {
-              const labelInput = label.querySelector("input") as HTMLInputElement;
-              label.classList.toggle("jamwidgets-selected", labelInput.checked);
-            });
-          });
-        } else if (showResults) {
-          // Show results
-          optionEl.innerHTML = `
-            <div class="jamwidgets-poll-result ${isSelected ? "jamwidgets-voted" : ""}">
-              <div class="jamwidgets-poll-bar" style="width: ${percent}%"></div>
-              <span class="jamwidgets-poll-text"></span>
-              <span class="jamwidgets-poll-percent">${percent}%</span>
-            </div>
-          `;
-        } else {
-          // Show without results (voted but results hidden)
-          optionEl.innerHTML = `
-            <div class="jamwidgets-poll-result jamwidgets-no-results ${isSelected ? "jamwidgets-voted" : ""}">
-              <span class="jamwidgets-poll-text"></span>
-            </div>
-          `;
-        }
-        optionEl.querySelector(".jamwidgets-poll-text")!.textContent = option.text;
-        optionsEl.appendChild(optionEl);
-      });
-
-      // Footer
-      if (showResults) {
-        totalEl.textContent = `${poll.totalVotes} vote${poll.totalVotes !== 1 ? "s" : ""}`;
-      } else {
-        totalEl.textContent = "";
-      }
-
-      if (isEnded) {
-        statusEl.textContent = "Ended";
-      } else if (!poll.isActive) {
-        statusEl.textContent = "Closed";
-      } else if (hasVoted) {
-        statusEl.textContent = "Voted";
-      } else {
-        statusEl.textContent = "";
-      }
-
-      // Submit button
-      if (canVote) {
-        submitBtn.style.display = "";
-        updateSubmitButton();
-      } else {
-        submitBtn.style.display = "none";
-      }
-    }
-
-    function updateSubmitButton() {
-      submitBtn.disabled = selectedOptions.size === 0;
-    }
-
-    submitBtn.addEventListener("click", async () => {
-      if (selectedOptions.size === 0) return;
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Voting...";
-
-      try {
-        const response = await fetch(`${endpoint}/polls/${pollSlug}/vote`, {
-          method: "POST",
-          headers: {
-            ...headers,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ selectedOptions: Array.from(selectedOptions) }),
-        });
-
-        if (!response.ok) {
-          throw await apiError(response, "Failed to vote");
-        }
-
-        const data = await response.json();
-        const result = data.vote_response;
-
-        // Update poll with new results
-        if (poll) {
-          poll.results = result.results;
-          poll.totalVotes = result.totalVotes;
-          poll.userVotes = Array.from(selectedOptions);
-        }
-
-        container.dispatchEvent(
-          new CustomEvent("jamwidgets:poll-voted", {
-            detail: { pollSlug, selectedOptions: Array.from(selectedOptions), results: result },
-          }),
-        );
-
-        renderPoll();
-      } catch (e) {
-        console.error("Failed to vote:", e);
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Vote";
-        errorEl.style.display = "block";
-        errorEl.textContent = e instanceof Error ? e.message : "Failed to vote";
-        setTimeout(() => {
-          errorEl.style.display = "none";
-        }, 3000);
-      }
-    });
-
-    loadPoll();
+    mountPoll(container, { siteKey, endpoint, slug: pollSlug, widget: "Poll" });
   });
 </script>
 
