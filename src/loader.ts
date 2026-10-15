@@ -19,7 +19,7 @@
 
 import {
   DEFAULT_ENDPOINT,
-  API_PATH,
+  buildUrl,
   getSiteKey,
   fetchPosts as coreFetchPosts,
   fetchPost as coreFetchPost,
@@ -56,10 +56,7 @@ export interface JamwidgetsPostsLoaderOptions {
 /** @deprecated Use JamwidgetsPostsLoaderOptions instead */
 export type SeriphPostsLoaderOptions = JamwidgetsPostsLoaderOptions;
 
-interface ApiResponse {
-  posts: JamwidgetsPost[];
-  total: number;
-}
+const LOADER_USER_AGENT = "JamwidgetsAstroLoader/1.0";
 
 /**
  * Creates an Astro content loader that fetches posts from Jamwidgets.
@@ -76,7 +73,6 @@ export function jamwidgetsPostsLoader(options: JamwidgetsPostsLoaderOptions): Lo
   } = options;
 
   const siteKey = getSiteKey({ siteKey: options.siteKey });
-  const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
   return {
     name: "jamwidgets-posts-loader",
@@ -85,33 +81,19 @@ export function jamwidgetsPostsLoader(options: JamwidgetsPostsLoaderOptions): Lo
       const { store, logger, renderMarkdown } = context;
 
       try {
-        const url = new URL(`${baseUrl}/posts`);
-        url.searchParams.set("limit", String(limit));
-        if (tag) {
-          url.searchParams.set("tag", tag);
-        }
+        logger.info(`Fetching posts from ${buildUrl(endpoint, "/posts")}`);
 
-        logger.info(`Fetching posts from ${url.toString()}`);
-
-        const response = await fetch(url.toString(), {
-          headers: {
-            "X-Jamwidgets-Key": siteKey,
-            "X-Seriph-Key": siteKey,
-            "User-Agent": "JamwidgetsAstroLoader/1.0",
-            ...(origin ? { Origin: origin } : {}),
-          },
+        const posts = await coreFetchPosts({
+          siteKey,
+          endpoint,
+          origin,
+          tag,
+          limit,
+          userAgent: LOADER_USER_AGENT,
         });
 
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch posts: ${response.status} ${response.statusText}`,
-          );
-        }
-
-        const data: ApiResponse = await response.json();
-
         const entries = await Promise.all(
-          data.posts.map(async (post) => ({
+          posts.map(async (post) => ({
             id: post.slug,
             data: { ...post },
             body: post.content,
@@ -124,7 +106,7 @@ export function jamwidgetsPostsLoader(options: JamwidgetsPostsLoaderOptions): Lo
           store.set(entry);
         }
 
-        logger.info(`Loaded ${data.posts.length} posts from Jamwidgets`);
+        logger.info(`Loaded ${posts.length} posts from Jamwidgets`);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
 

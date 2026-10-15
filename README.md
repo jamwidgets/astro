@@ -11,18 +11,6 @@ Astro components and content loader for [Jamwidgets](https://jamwidgets.com) - w
 npm install @jamwidgets/astro
 ```
 
-## Galleries
-
-```astro
----
-import GalleryIndex from "@jamwidgets/astro/GalleryIndex";
-import Gallery from "@jamwidgets/astro/Gallery";
----
-
-<GalleryIndex siteKey="your-key" deepLink />
-<Gallery siteKey="your-key" slug="field-notes" tag="portraits" />
-```
-
 ## Setup
 
 Add your Jamwidgets site key to your `.env`:
@@ -149,7 +137,7 @@ import Form from "@jamwidgets/astro/Form";
 - `siteKey` (required) - Your Jamwidgets site key
 - `formSlug` (required) - The form slug as configured in Jamwidgets
 - `endpoint` - Base URL (default: `https://jamwidgets.com`)
-- `theme` - `'light'` | `'dark'` | `'auto'` (default: `'light'`)
+- `theme` - `'inherit'` | `'light'` | `'dark'` | `'auto'` (default: `'inherit'`, matching the host page)
 - `class` - Additional CSS class
 
 **Events:**
@@ -176,7 +164,7 @@ import Comments from "@jamwidgets/astro/Comments";
 - `siteKey` (required) - Your Jamwidgets site key
 - `pageId` (required) - Unique page identifier (e.g., URL path)
 - `endpoint` - Base URL (default: `https://jamwidgets.com`)
-- `theme` - `'light'` | `'dark'` | `'auto'` (default: `'light'`)
+- `theme` - `'inherit'` | `'light'` | `'dark'` | `'auto'` (default: `'inherit'`, matching the host page)
 - `class` - Additional CSS class
 
 **Events:**
@@ -204,7 +192,7 @@ import Reactions from "@jamwidgets/astro/Reactions";
 - `reactions` - Array of reaction types (default: `['like']`)
 - `icons` - Custom icons: `{ like: '👍', love: '❤️' }`
 - `endpoint` - Base URL (default: `https://jamwidgets.com`)
-- `theme` - `'light'` | `'dark'` | `'auto'` (default: `'light'`)
+- `theme` - `'inherit'` | `'light'` | `'dark'` | `'auto'` (default: `'inherit'`, matching the host page)
 - `class` - Additional CSS class
 
 **Built-in icons:** `like`, `love`, `clap`, `fire`, `think`, `sad`, `laugh`
@@ -236,7 +224,7 @@ import Subscribe from "@jamwidgets/astro/Subscribe";
 - `placeholder` - Email input placeholder
 - `label` - Accessible name for the email input (default: `'Email address'`)
 - `successMessage` - Custom success message
-- `theme` - `'light'` | `'dark'` | `'auto'` (default: `'light'`)
+- `theme` - `'inherit'` | `'light'` | `'dark'` | `'auto'` (default: `'inherit'`, matching the host page)
 - `class` - Additional CSS class
 
 **Events:**
@@ -256,6 +244,195 @@ import SubscribeForm from "@jamwidgets/astro/SubscribeForm";
   <button type="submit">Join newsletter</button>
 </SubscribeForm>
 ```
+
+### Poll
+
+A poll with live results. Results follow the poll's visibility setting (always, after voting, after the poll ends, or never):
+
+```astro
+---
+import Poll from "@jamwidgets/astro/Poll";
+---
+
+<Poll siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} slug="favorite-framework" />
+```
+
+**Props:**
+- `siteKey` (required) - Your Jamwidgets site key
+- `slug` (required) - The poll slug
+- `endpoint` - Base URL (default: `https://jamwidgets.com`)
+- `theme` - `'inherit'` | `'light'` | `'dark'` | `'auto'` (default: `'inherit'`, matching the host page)
+- `class` - Additional CSS class
+
+### Embed
+
+Brings polls placed in a post with the editor to life. Render it after the post content:
+
+```astro
+---
+import { render } from "astro:content";
+import Embed from "@jamwidgets/astro/Embed";
+const { Content } = await render(post);
+---
+
+<article><Content /></article>
+<Embed siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} />
+```
+
+It hydrates every `<div data-jamwidgets-embed="poll" data-slug="...">` on the page with the same poll as `Poll`.
+
+**Props:**
+- `siteKey` (required) - Your Jamwidgets site key
+- `endpoint` - Base URL (default: `https://jamwidgets.com`)
+- `theme` - `'inherit'` | `'light'` | `'dark'` | `'auto'` (default: `'inherit'`, matching the host page)
+
+### Views
+
+Records a page view and shows the count:
+
+```astro
+---
+import Views from "@jamwidgets/astro/Views";
+---
+
+<Views siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} pageId={Astro.url.pathname} showUnique />
+```
+
+**Props:**
+- `siteKey` (required) - Your Jamwidgets site key
+- `pageId` (required) - Unique page identifier
+- `showUnique` - Also show unique visitors (default: `false`)
+- `endpoint` - Base URL (default: `https://jamwidgets.com`)
+- `theme` - `'inherit'` | `'light'` | `'dark'` | `'auto'` (default: `'inherit'`, matching the host page)
+- `class` - Additional CSS class
+
+**Events:**
+- `jamwidgets:view-recorded` - View recorded (detail contains the counts)
+
+### Analytics
+
+Cookieless pageview analytics. Put it once in your layout; it renders nothing:
+
+```astro
+---
+import Analytics from "@jamwidgets/astro/Analytics";
+---
+
+<Analytics siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} />
+```
+
+**Props:**
+- `siteKey` - Your Jamwidgets site key (falls back to the `jamwidgets-site-key` meta tag)
+- `endpoint` - Base URL (default: `https://jamwidgets.com`)
+
+### Announcements
+
+Site-wide banners managed in the dashboard. Visitors can dismiss the ones marked dismissible:
+
+```astro
+---
+import Announcements from "@jamwidgets/astro/Announcements";
+---
+
+<Announcements siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} />
+```
+
+**Props:**
+- `siteKey` (required) - Your Jamwidgets site key
+- `endpoint` - Base URL (default: `https://jamwidgets.com`)
+- `theme` - `'inherit'` | `'light'` | `'dark'` | `'auto'` (default: `'inherit'`, matching the host page)
+- `class` - Additional CSS class
+
+**Events:**
+- `jamwidgets:announcement-dismissed` - Announcement dismissed
+
+### Feedback
+
+A feedback box with a type selector (feature, bug, other):
+
+```astro
+---
+import Feedback from "@jamwidgets/astro/Feedback";
+---
+
+<Feedback siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} />
+```
+
+**Props:**
+- `siteKey` (required) - Your Jamwidgets site key
+- `placeholder` - Input placeholder (default: `'Share your feedback...'`)
+- `showTypeSelector` - Show the type selector (default: `true`)
+- `endpoint` - Base URL (default: `https://jamwidgets.com`)
+- `theme` - `'inherit'` | `'light'` | `'dark'` | `'auto'` (default: `'inherit'`, matching the host page)
+- `class` - Additional CSS class
+
+**Events:**
+- `jamwidgets:feedback-submitted` - Feedback sent
+
+### Waitlist
+
+An email signup for a waitlist, optionally showing the visitor's position:
+
+```astro
+---
+import Waitlist from "@jamwidgets/astro/Waitlist";
+---
+
+<Waitlist siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} buttonText="Get early access" />
+```
+
+**Props:**
+- `siteKey` (required) - Your Jamwidgets site key
+- `placeholder` - Email input placeholder (default: `'Enter your email'`)
+- `label` - Accessible name for the email input (default: `'Email address'`)
+- `buttonText` - Submit button text (default: `'Join Waitlist'`)
+- `successMessage` - Success message (default: `"You're on the list!"`)
+- `endpoint` - Base URL (default: `https://jamwidgets.com`)
+- `theme` - `'inherit'` | `'light'` | `'dark'` | `'auto'` (default: `'inherit'`, matching the host page)
+- `class` - Additional CSS class
+
+**Events:**
+- `jamwidgets:waitlist-joined` - Visitor joined (detail contains the email)
+
+### Gallery, GalleryIndex and RandomPhoto
+
+Responsive photo galleries uploaded in the dashboard. The gallery code loads only on pages that use one of these three:
+
+```astro
+---
+import Gallery from "@jamwidgets/astro/Gallery";
+import GalleryIndex from "@jamwidgets/astro/GalleryIndex";
+import RandomPhoto from "@jamwidgets/astro/RandomPhoto";
+---
+
+<GalleryIndex siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} deepLink />
+<Gallery siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} slug="field-notes" tag="portraits" />
+<RandomPhoto siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} slug="field-notes" />
+```
+
+**Props:**
+- `siteKey` (required) - Your Jamwidgets site key
+- `slug` (required for `Gallery` and `RandomPhoto`) - The gallery slug
+- `tag` - Only show photos with this tag (`Gallery`, `RandomPhoto`)
+- `seed` - Pick the same random photo for the same seed (`RandomPhoto`)
+- `deepLink` - Keep the open gallery in the URL (`GalleryIndex`)
+- `endpoint` - Base URL (default: `https://jamwidgets.com`)
+
+### PoweredBy
+
+The "Powered by Jamwidgets" link, shown only when the site's plan requires it:
+
+```astro
+---
+import PoweredBy from "@jamwidgets/astro/PoweredBy";
+---
+
+<PoweredBy siteKey={import.meta.env.JAMWIDGETS_SITE_KEY} />
+```
+
+**Props:**
+- `siteKey` (required) - Your Jamwidgets site key
+- `endpoint` - Base URL (default: `https://jamwidgets.com`)
 
 ### Missing content
 

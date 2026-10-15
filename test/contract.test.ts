@@ -43,6 +43,8 @@ describe("widget API contract", () => {
     }
     // The shared poll view only calls the core controller's fetch method.
     expect(await source("poll-view.ts")).not.toMatch(/(?<!\.)\bfetch\(/);
+    // Build-time loaders read posts and galleries through core too.
+    expect(await source("loader.ts")).not.toMatch(/(?<!\.)\bfetch\(/);
   });
 
   it("Poll and Embed share one poll implementation", async () => {

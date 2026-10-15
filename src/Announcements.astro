@@ -42,16 +42,7 @@ import Theme from "./Theme.astro";
 ></div>
 
 <script>
-  interface Announcement {
-    id: string;
-    content: string;
-    announcementType: "info" | "warning" | "success" | "error";
-    linkUrl?: string;
-    linkText?: string;
-    isDismissible: boolean;
-  }
-
-  import { dismissAnnouncement, fetchAnnouncements } from "@jamwidgets/core";
+  import { type Announcement, dismissAnnouncement, fetchAnnouncements } from "@jamwidgets/core";
 
   document.querySelectorAll("[data-jamwidgets-announcements]").forEach((container) => {
     const endpoint = (container as HTMLElement).dataset.endpoint;
@@ -62,8 +53,7 @@ import Theme from "./Theme.astro";
 
     async function loadAnnouncements() {
       try {
-        // The API sends announcement IDs as strings; core's type still says number.
-        renderAnnouncements((await fetchAnnouncements(config)) as unknown as Announcement[]);
+        renderAnnouncements(await fetchAnnouncements(config));
       } catch (e) {
         console.error("Failed to load announcements:", e);
       }
