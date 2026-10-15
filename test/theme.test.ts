@@ -99,12 +99,15 @@ describe("widget moderation protocol", () => {
     const form = await source("Form");
     const comments = await source("Comments");
 
-    expect(form).toContain("data._seriph_ts = loadTimestamp");
-    expect(form).toContain("data._seriph_id = requestIds.get(formEl)");
+    // Core turns formLoadTime and requestId into _seriph_ts and _seriph_id.
+    expect(form).toMatch(/import \{[^}]*\bsubmitForm\b[^}]*\} from "@jamwidgets\/core"/);
+    expect(form).toContain("const formLoadTime = formTimestamps.get(formEl)");
+    expect(form).toContain("const requestId = requestIds.get(formEl)");
     expect(form).toContain("requestBodies.get(formEl) !== comparableBody");
     expect(form).toMatch(/import \{[^}]*\bgenerateUUID\b[^}]*\} from "@jamwidgets\/core"/);
     expect(form).not.toContain("crypto.randomUUID");
-    expect(comments).toContain("_seriph_ts: loadTimestamp");
+    expect(comments).toContain("formLoadTime: loadTimestamp");
+    expect(comments).toContain("honeypot: honeypot || undefined");
     expect(form).not.toContain("_jamwidgets_ts");
     expect(comments).not.toContain("_jamwidgets_ts");
   });

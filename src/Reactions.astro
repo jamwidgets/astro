@@ -31,7 +31,6 @@ interface Props {
 }
 
 const DEFAULT_ENDPOINT = "https://jamwidgets.com";
-const API_PATH = "/api/v1";
 
 const defaultIcons: Record<string, string> = {
   like: "\u{1F44D}",
@@ -60,8 +59,6 @@ function getIcon(type: string): string {
   return mergedIcons[type] || type;
 }
 
-// Build the API URL
-const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
 import Theme from "./Theme.astro";
 ---
@@ -70,7 +67,7 @@ import Theme from "./Theme.astro";
 <div
   class:list={["jamwidgets-reactions", `jamwidgets-theme-${theme}`, className]}
   data-jamwidgets-reactions
-  data-endpoint={baseUrl}
+  data-endpoint={endpoint}
   data-site-key={siteKey}
   data-page-id={pageId}
 >
@@ -90,7 +87,7 @@ import Theme from "./Theme.astro";
 </div>
 
 <script>
-  import { getAttributionHeaders, getVisitorId } from "@jamwidgets/core";
+  import { addReaction, fetchReactions, removeReaction } from "@jamwidgets/core";
 
   document.querySelectorAll("[data-jamwidgets-reactions]").forEach((container) => {
     const endpoint = (container as HTMLElement).dataset.endpoint;
@@ -98,13 +95,7 @@ import Theme from "./Theme.astro";
     const pageId = (container as HTMLElement).dataset.pageId;
 
     if (!endpoint || !siteKey || !pageId) return;
-
-    const visitorId = getVisitorId();
-    const headers = {
-      ...getAttributionHeaders(pageId),
-      "X-Jamwidgets-Key": siteKey,
-      "X-Jamwidgets-Visitor": visitorId,
-    };
+    const config = { siteKey, endpoint, pageId };
 
     const storageKey = `jamwidgets-reactions-${pageId}`;
     const userReactions = new Set<string>();
@@ -125,15 +116,9 @@ import Theme from "./Theme.astro";
 
     async function loadReactions() {
       try {
-        const response = await fetch(
-          `${endpoint}/reactions/${encodeURIComponent(pageId!)}`,
-          { headers },
-        );
-        if (!response.ok) return;
-        const data = await response.json();
-        const result = data.reaction_counts_with_user;
-        const counts = result?.counts || {};
-        const serverUserReactions = result?.userReactions || [];
+        const result = await fetchReactions(config);
+        const counts: Record<string, number> = result.counts || {};
+        const serverUserReactions = result.userReactions;
 
         // Sync with server's user reactions
         serverUserReactions.forEach((type: string) => userReactions.add(type));
@@ -168,24 +153,10 @@ import Theme from "./Theme.astro";
         btn.classList.add("jamwidgets-loading");
 
         try {
-          const response = await fetch(
-            `${endpoint}/reactions/${encodeURIComponent(pageId)}`,
-            {
-              method: isReacted ? "DELETE" : "POST",
-              headers: {
-                ...headers,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ reactionType: type }),
-            },
-          );
-
-          if (!response.ok) throw new Error(isReacted ? "Failed to remove reaction" : "Failed to add reaction");
-
-          const data = await response.json();
+          const reaction = await (isReacted ? removeReaction : addReaction)({ ...config, reactionType: type });
           const countEl = btn.querySelector(".jamwidgets-reaction-count");
           if (countEl) {
-            countEl.textContent = String(data.reaction?.count || 0);
+            countEl.textContent = String(reaction?.count || 0);
           }
 
           if (isReacted) {
@@ -194,7 +165,7 @@ import Theme from "./Theme.astro";
             userReactions.delete(type);
             container.dispatchEvent(
               new CustomEvent("jamwidgets:reaction-removed", {
-                detail: data.reaction,
+                detail: reaction,
               }),
             );
           } else {
@@ -203,7 +174,7 @@ import Theme from "./Theme.astro";
             userReactions.add(type);
             container.dispatchEvent(
               new CustomEvent("jamwidgets:reaction-added", {
-                detail: data.reaction,
+                detail: reaction,
               }),
             );
           }

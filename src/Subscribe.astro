@@ -37,7 +37,6 @@ interface Props {
 }
 
 const DEFAULT_ENDPOINT = "https://jamwidgets.com";
-const API_PATH = "/api/v1";
 
 const {
   siteKey,
@@ -50,8 +49,6 @@ const {
   class: className = "",
 } = Astro.props;
 
-// Build the API URL
-const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
 import PoweredBy from "./PoweredBy.astro";
 import Theme from "./Theme.astro";
@@ -61,7 +58,7 @@ import Theme from "./Theme.astro";
 <form
   class:list={["jamwidgets-subscribe", `jamwidgets-theme-${theme}`, className]}
   data-jamwidgets-subscribe
-  data-endpoint={baseUrl}
+  data-endpoint={endpoint}
   data-site-key={siteKey}
   data-success-message={successMessage}
 >
@@ -97,7 +94,7 @@ import Theme from "./Theme.astro";
     message: string;
   }
 
-  import { apiError, getVisitorId } from "@jamwidgets/core";
+  import { subscribe } from "@jamwidgets/core";
 
   document.querySelectorAll("[data-jamwidgets-subscribe]").forEach((form) => {
     form.addEventListener("submit", async (e) => {
@@ -134,21 +131,12 @@ import Theme from "./Theme.astro";
       }
 
       try {
-        const response = await fetch(`${endpoint}/subscribe`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Jamwidgets-Key": siteKey,
-            "X-Jamwidgets-Visitor": getVisitorId(),
-          },
-          body: JSON.stringify(data),
+        const result: SubscribeResponse = await subscribe({
+          siteKey,
+          endpoint,
+          email: String(data.email ?? ""),
+          honeypot: typeof data._gotcha === "string" ? data._gotcha : undefined,
         });
-
-        if (!response.ok) {
-          throw await apiError(response, "Subscription failed");
-        }
-
-        const result: SubscribeResponse = await response.json();
 
         // Show success message
         if (messageEl) {

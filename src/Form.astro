@@ -28,7 +28,6 @@ interface Props {
 }
 
 const DEFAULT_ENDPOINT = "https://jamwidgets.com";
-const API_PATH = "/api/v1";
 
 const {
   siteKey,
@@ -38,8 +37,6 @@ const {
   class: className = "",
 } = Astro.props;
 
-// Build the API URL
-const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
 import PoweredBy from "./PoweredBy.astro";
 import Theme from "./Theme.astro";
@@ -49,7 +46,7 @@ import Theme from "./Theme.astro";
 <form
   class:list={["jamwidgets-form", `jamwidgets-theme-${theme}`, className]}
   data-jamwidgets-form
-  data-endpoint={baseUrl}
+  data-endpoint={endpoint}
   data-site-key={siteKey}
   data-form-slug={formSlug}
 >
@@ -67,7 +64,7 @@ import Theme from "./Theme.astro";
 </form>
 
 <script>
-  import { apiError, generateUUID, getAttributionHeaders, getVisitorId } from "@jamwidgets/core";
+  import { generateUUID, submitForm } from "@jamwidgets/core";
 
   interface FormSubmitResponse {
     success: boolean;
@@ -112,17 +109,15 @@ import Theme from "./Theme.astro";
         data[key] = value;
       });
 
-      // Add timestamp for time-based spam detection
-      const loadTimestamp = formTimestamps.get(formEl);
-      if (loadTimestamp) {
-        data._seriph_ts = loadTimestamp;
-      }
+      // Reuse the idempotency key while the same values are retried; core adds
+      // it and the load time (for time-based spam detection) to the request.
+      const formLoadTime = formTimestamps.get(formEl);
       const comparableBody = JSON.stringify(data);
       if (requestBodies.get(formEl) !== comparableBody) {
         requestIds.set(formEl, generateUUID());
         requestBodies.set(formEl, comparableBody);
       }
-      data._seriph_id = requestIds.get(formEl) || generateUUID();
+      const requestId = requestIds.get(formEl) || generateUUID();
 
       // Dispatch loading event
       formEl.dispatchEvent(new CustomEvent("jamwidgets:loading"));
@@ -133,22 +128,14 @@ import Theme from "./Theme.astro";
       }
 
       try {
-        const response = await fetch(`${endpoint}/forms/${formSlug}/submit`, {
-          method: "POST",
-          headers: {
-            ...getAttributionHeaders(),
-            "Content-Type": "application/json",
-            "X-Jamwidgets-Key": siteKey,
-            "X-Jamwidgets-Visitor": getVisitorId(),
-          },
-          body: JSON.stringify(data),
+        const result: FormSubmitResponse = await submitForm({
+          siteKey,
+          endpoint,
+          formSlug,
+          data,
+          formLoadTime,
+          requestId,
         });
-
-        if (!response.ok) {
-          throw await apiError(response, "Submission failed");
-        }
-
-        const result: FormSubmitResponse = await response.json();
         requestIds.set(formEl, generateUUID());
         requestBodies.delete(formEl);
 

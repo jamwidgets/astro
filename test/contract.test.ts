@@ -22,7 +22,7 @@ describe("widget API contract", () => {
     const accepted = await apiEnum("FeedbackWrite", "feedbackType");
     const feedback = await source("Feedback.astro");
     const offered = [...feedback.matchAll(/name="feedbackType" value="([^"]+)"/g)].map((m) => m[1]);
-    const fallback = feedback.match(/const feedbackType = typeInput\?\.value \|\| "([^"]+)"/)?.[1];
+    const fallback = feedback.match(/const feedbackType = \(?typeInput\?\.value \|\| "([^"]+)"/)?.[1];
 
     expect(offered.length).toBeGreaterThan(0);
     for (const type of [...offered, fallback]) {
@@ -30,8 +30,20 @@ describe("widget API contract", () => {
     }
   });
 
-  it("Comments sends the reply parent as an integer", async () => {
-    expect(await source("Comments.astro")).toContain("parentId: parentId ? parseInt(parentId, 10) : undefined");
+  it("Comments sends replies through core, which sends the parent as an integer", async () => {
+    const comments = await source("Comments.astro");
+    expect(comments).toMatch(/import \{[^}]*\bpostComment\b[^}]*\} from "@jamwidgets\/core"/);
+    expect(comments).toContain("parentId: parentId || undefined");
+  });
+
+  it("leaves widget requests to core", async () => {
+    const widgets = [
+      "Announcements", "Comments", "Feedback", "Form", "PoweredBy",
+      "Reactions", "Subscribe", "SubscribeForm", "Views", "Waitlist",
+    ];
+    for (const widget of widgets) {
+      expect(await source(`${widget}.astro`), widget).not.toMatch(/\bfetch\(/);
+    }
   });
 
   it("shows the server's error message, never a raw body or statusText", async () => {

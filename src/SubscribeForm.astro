@@ -43,7 +43,6 @@ interface Props {
 }
 
 const DEFAULT_ENDPOINT = "https://jamwidgets.com";
-const API_PATH = "/api/v1";
 
 const {
   siteKey,
@@ -52,14 +51,13 @@ const {
   class: className = "",
 } = Astro.props;
 
-const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 ---
 
 <form
   id={id}
   class:list={["jamwidgets-subscribe-form", className]}
   data-jamwidgets-subscribe-form
-  data-endpoint={baseUrl}
+  data-endpoint={endpoint}
   data-site-key={siteKey}
 >
   <slot />
@@ -71,7 +69,7 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 </form>
 
 <script>
-  import { apiError, getAttributionHeaders, getVisitorId } from "@jamwidgets/core";
+  import { subscribe } from "@jamwidgets/core";
 
   interface SubscribeResponse {
     success: boolean;
@@ -102,22 +100,12 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
       formEl.dispatchEvent(new CustomEvent("jamwidgets:loading", { bubbles: true }));
 
       try {
-        const response = await fetch(`${endpoint}/subscribe`, {
-          method: "POST",
-          headers: {
-            ...getAttributionHeaders(),
-            "Content-Type": "application/json",
-            "X-Jamwidgets-Key": siteKey,
-            "X-Jamwidgets-Visitor": getVisitorId(),
-          },
-          body: JSON.stringify(data),
+        const result: SubscribeResponse = await subscribe({
+          siteKey,
+          endpoint,
+          email: String(data.email ?? ""),
+          honeypot: typeof data._gotcha === "string" ? data._gotcha : undefined,
         });
-
-        if (!response.ok) {
-          throw await apiError(response, "Subscription failed");
-        }
-
-        const result: SubscribeResponse = await response.json();
 
         // Dispatch success event
         formEl.dispatchEvent(

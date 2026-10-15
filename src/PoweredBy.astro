@@ -19,16 +19,14 @@ interface Props {
 }
 
 const DEFAULT_ENDPOINT = "https://jamwidgets.com";
-const API_PATH = "/api/v1";
 
 const { siteKey, endpoint = DEFAULT_ENDPOINT } = Astro.props;
-const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 ---
 
 <div
   class="jamwidgets-powered-by"
   data-jamwidgets-powered-by
-  data-endpoint={baseUrl}
+  data-endpoint={endpoint}
   data-site-key={siteKey}
   hidden
 >
@@ -39,29 +37,16 @@ const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
 <script>
   // Reveal the footer only when the site config explicitly enables it.
-  // Site config is fetched once per (endpoint, siteKey); on any failure we
-  // leave the footer hidden (fail closed — never brand a paying site).
-  const poweredByCache = new Map<string, Promise<boolean>>();
-
-  function showsPoweredBy(baseUrl: string, siteKey: string): Promise<boolean> {
-    const key = `${baseUrl}::${siteKey}`;
-    let pending = poweredByCache.get(key);
-    if (!pending) {
-      pending = fetch(`${baseUrl}/site`, { headers: { "X-Jamwidgets-Key": siteKey } })
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => data?.site_config?.showPoweredBy === true)
-        .catch(() => false);
-      poweredByCache.set(key, pending);
-    }
-    return pending;
-  }
+  // Core fetches site config once per (endpoint, siteKey) and returns null on
+  // any failure, so the footer stays hidden (never brand a paying site).
+  import { fetchSiteConfig } from "@jamwidgets/core";
 
   document.querySelectorAll<HTMLElement>("[data-jamwidgets-powered-by]").forEach((el) => {
-    const baseUrl = el.dataset.endpoint;
+    const endpoint = el.dataset.endpoint;
     const siteKey = el.dataset.siteKey;
-    if (!baseUrl || !siteKey) return;
-    showsPoweredBy(baseUrl, siteKey).then((show) => {
-      if (show) el.removeAttribute("hidden");
+    if (!endpoint || !siteKey) return;
+    fetchSiteConfig({ siteKey, endpoint }).then((config) => {
+      if (config?.showPoweredBy === true) el.removeAttribute("hidden");
     });
   });
 </script>

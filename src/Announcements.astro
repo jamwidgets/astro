@@ -21,7 +21,6 @@ interface Props {
 }
 
 const DEFAULT_ENDPOINT = "https://jamwidgets.com";
-const API_PATH = "/api/v1";
 
 const {
   siteKey,
@@ -30,8 +29,6 @@ const {
   class: className = "",
 } = Astro.props;
 
-// Build the API URL
-const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
 import Theme from "./Theme.astro";
 ---
@@ -40,7 +37,7 @@ import Theme from "./Theme.astro";
 <div
   class:list={["jamwidgets-announcements", `jamwidgets-theme-${theme}`, className]}
   data-jamwidgets-announcements
-  data-endpoint={baseUrl}
+  data-endpoint={endpoint}
   data-site-key={siteKey}
 ></div>
 
@@ -54,27 +51,19 @@ import Theme from "./Theme.astro";
     isDismissible: boolean;
   }
 
-  import { getVisitorId } from "@jamwidgets/core";
+  import { dismissAnnouncement, fetchAnnouncements } from "@jamwidgets/core";
 
   document.querySelectorAll("[data-jamwidgets-announcements]").forEach((container) => {
     const endpoint = (container as HTMLElement).dataset.endpoint;
     const siteKey = (container as HTMLElement).dataset.siteKey;
 
     if (!endpoint || !siteKey) return;
-
-    const visitorId = getVisitorId();
-    const headers = {
-      "X-Jamwidgets-Key": siteKey,
-      "X-Jamwidgets-Visitor": visitorId,
-    };
+    const config = { siteKey, endpoint };
 
     async function loadAnnouncements() {
       try {
-        const response = await fetch(`${endpoint}/announcements`, { headers });
-        if (!response.ok) return;
-        const data = await response.json();
-        const announcements: Announcement[] = data.announcements || [];
-        renderAnnouncements(announcements);
+        // The API sends announcement IDs as strings; core's type still says number.
+        renderAnnouncements((await fetchAnnouncements(config)) as unknown as Announcement[]);
       } catch (e) {
         console.error("Failed to load announcements:", e);
       }
@@ -127,10 +116,7 @@ import Theme from "./Theme.astro";
         const dismissBtn = el.querySelector(".jamwidgets-announcement-dismiss");
         dismissBtn?.addEventListener("click", async () => {
           try {
-            await fetch(`${endpoint}/announcements/${announcement.id}/dismiss`, {
-              method: "POST",
-              headers,
-            });
+            await dismissAnnouncement({ ...config, announcementId: announcement.id });
             el.remove();
             container.dispatchEvent(
               new CustomEvent("jamwidgets:announcement-dismissed", {

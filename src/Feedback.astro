@@ -25,7 +25,6 @@ interface Props {
 }
 
 const DEFAULT_ENDPOINT = "https://jamwidgets.com";
-const API_PATH = "/api/v1";
 
 const {
   siteKey,
@@ -36,8 +35,6 @@ const {
   class: className = "",
 } = Astro.props;
 
-// Build the API URL
-const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
 import PoweredBy from "./PoweredBy.astro";
 import Theme from "./Theme.astro";
@@ -47,7 +44,7 @@ import Theme from "./Theme.astro";
 <div
   class:list={["jamwidgets-feedback", `jamwidgets-theme-${theme}`, className]}
   data-jamwidgets-feedback
-  data-endpoint={baseUrl}
+  data-endpoint={endpoint}
   data-site-key={siteKey}
 >
   <form class="jamwidgets-feedback-form">
@@ -86,20 +83,13 @@ import Theme from "./Theme.astro";
 </div>
 
 <script>
-  import { apiError, getVisitorId } from "@jamwidgets/core";
+  import { submitFeedback, type FeedbackType } from "@jamwidgets/core";
 
   document.querySelectorAll("[data-jamwidgets-feedback]").forEach((container) => {
     const endpoint = (container as HTMLElement).dataset.endpoint;
     const siteKey = (container as HTMLElement).dataset.siteKey;
 
     if (!endpoint || !siteKey) return;
-
-    const visitorId = getVisitorId();
-    const headers = {
-      "X-Jamwidgets-Key": siteKey,
-      "X-Jamwidgets-Visitor": visitorId,
-      "Content-Type": "application/json",
-    };
 
     const form = container.querySelector(".jamwidgets-feedback-form") as HTMLFormElement;
     const textarea = container.querySelector(".jamwidgets-feedback-textarea") as HTMLTextAreaElement;
@@ -113,7 +103,7 @@ import Theme from "./Theme.astro";
       if (!content) return;
 
       const typeInput = form.querySelector('input[name="feedbackType"]:checked') as HTMLInputElement | null;
-      const feedbackType = typeInput?.value || "general";
+      const feedbackType = (typeInput?.value || "general") as FeedbackType;
 
       submitBtn.disabled = true;
       submitBtn.textContent = "Sending...";
@@ -121,15 +111,7 @@ import Theme from "./Theme.astro";
       messageEl.className = "jamwidgets-feedback-message";
 
       try {
-        const response = await fetch(`${endpoint}/feedback`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ content, feedbackType }),
-        });
-
-        if (!response.ok) {
-          throw await apiError(response, "Failed to submit feedback");
-        }
+        await submitFeedback({ siteKey, endpoint, type: feedbackType, content });
 
         textarea.value = "";
         messageEl.textContent = "Thank you for your feedback!";

@@ -28,7 +28,6 @@ interface Props {
 }
 
 const DEFAULT_ENDPOINT = "https://jamwidgets.com";
-const API_PATH = "/api/v1";
 
 const {
   siteKey,
@@ -41,8 +40,6 @@ const {
   class: className = "",
 } = Astro.props;
 
-// Build the API URL
-const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
 import PoweredBy from "./PoweredBy.astro";
 import Theme from "./Theme.astro";
@@ -52,7 +49,7 @@ import Theme from "./Theme.astro";
 <div
   class:list={["jamwidgets-waitlist", `jamwidgets-theme-${theme}`, className]}
   data-jamwidgets-waitlist
-  data-endpoint={baseUrl}
+  data-endpoint={endpoint}
   data-site-key={siteKey}
   data-success-message={successMessage}
 >
@@ -76,7 +73,7 @@ import Theme from "./Theme.astro";
 </div>
 
 <script>
-  import { apiError, getVisitorId } from "@jamwidgets/core";
+  import { joinWaitlist } from "@jamwidgets/core";
 
   document.querySelectorAll("[data-jamwidgets-waitlist]").forEach((container) => {
     const endpoint = (container as HTMLElement).dataset.endpoint;
@@ -84,13 +81,6 @@ import Theme from "./Theme.astro";
     const successMessage = (container as HTMLElement).dataset.successMessage || "You're on the list!";
 
     if (!endpoint || !siteKey) return;
-
-    const visitorId = getVisitorId();
-    const headers = {
-      "X-Jamwidgets-Key": siteKey,
-      "X-Jamwidgets-Visitor": visitorId,
-      "Content-Type": "application/json",
-    };
 
     const form = container.querySelector(".jamwidgets-waitlist-form") as HTMLFormElement;
     const input = container.querySelector(".jamwidgets-waitlist-input") as HTMLInputElement;
@@ -109,15 +99,7 @@ import Theme from "./Theme.astro";
       messageEl.style.display = "none";
 
       try {
-        const response = await fetch(`${endpoint}/waitlist`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ email }),
-        });
-
-        if (!response.ok) {
-          throw await apiError(response, "Failed to join waitlist");
-        }
+        await joinWaitlist({ siteKey, endpoint, email });
 
         // Hide form and show success
         form.style.display = "none";

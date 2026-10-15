@@ -28,7 +28,6 @@ interface Props {
 }
 
 const DEFAULT_ENDPOINT = "https://jamwidgets.com";
-const API_PATH = "/api/v1";
 
 const {
   siteKey,
@@ -39,8 +38,6 @@ const {
   class: className = "",
 } = Astro.props;
 
-// Build the API URL
-const baseUrl = endpoint.replace(/\/+$/, "") + API_PATH;
 
 import Theme from "./Theme.astro";
 ---
@@ -49,7 +46,7 @@ import Theme from "./Theme.astro";
 <div
   class:list={["jamwidgets-views", `jamwidgets-theme-${theme}`, className]}
   data-jamwidgets-views
-  data-endpoint={baseUrl}
+  data-endpoint={endpoint}
   data-site-key={siteKey}
   data-page-id={pageId}
   data-show-unique={showUnique}
@@ -65,7 +62,7 @@ import Theme from "./Theme.astro";
 </div>
 
 <script>
-  import { getVisitorId } from "@jamwidgets/core";
+  import { getViewCounts, recordView as recordPageView } from "@jamwidgets/core";
 
   document.querySelectorAll("[data-jamwidgets-views]").forEach((container) => {
     const endpoint = (container as HTMLElement).dataset.endpoint;
@@ -74,12 +71,7 @@ import Theme from "./Theme.astro";
     const showUnique = (container as HTMLElement).dataset.showUnique === "true";
 
     if (!endpoint || !siteKey || !pageId) return;
-
-    const visitorId = getVisitorId();
-    const headers = {
-      "X-Jamwidgets-Key": siteKey,
-      "X-Jamwidgets-Visitor": visitorId,
-    };
+    const config = { siteKey, endpoint, pageId };
 
     const countEl = container.querySelector(".jamwidgets-views-count");
     const uniqueEl = container.querySelector(".jamwidgets-views-unique") as HTMLElement;
@@ -87,23 +79,14 @@ import Theme from "./Theme.astro";
     // Record the view
     async function recordView() {
       try {
-        const response = await fetch(
-          `${endpoint}/views/${encodeURIComponent(pageId!)}`,
-          {
-            method: "POST",
-            headers,
-          },
-        );
-        if (!response.ok) return;
-        const data = await response.json();
-        const result = data.record_view_response;
+        const result = await recordPageView(config);
 
         if (countEl) {
           countEl.textContent = String(result?.views || 0);
         }
 
-        if (showUnique && uniqueEl && result?.unique_visitors !== undefined) {
-          uniqueEl.textContent = `(${result.unique_visitors} unique)`;
+        if (showUnique && uniqueEl && result?.uniqueVisitors !== undefined) {
+          uniqueEl.textContent = `(${result.uniqueVisitors} unique)`;
           uniqueEl.style.display = "";
         }
 
@@ -122,13 +105,7 @@ import Theme from "./Theme.astro";
     // Load view count without recording
     async function loadView() {
       try {
-        const response = await fetch(
-          `${endpoint}/views/${encodeURIComponent(pageId!)}`,
-          { headers },
-        );
-        if (!response.ok) return;
-        const data = await response.json();
-        const result = data.page_view_counts;
+        const result = await getViewCounts(config);
 
         if (countEl) {
           countEl.textContent = String(result?.views || 0);
